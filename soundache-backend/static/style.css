@@ -2,10 +2,23 @@ body {
     background-color: rgb(37, 36, 44);
     color: yellow;
 }
-.lightbg {
+.darkbg {
     background-color: black;
+    color:crimson;
     border-radius: 20px;
 }
 #home {
     width:175px;
+    height: 100px;
+    float: left;
+}
+#searchbar {
+    width: 700px;
+    border: 0 0;
+    text-align: center;
+    float: center;
+    height: 100px;
+}
+#searchbar :hover {
+    border-color: yellow;
 }
