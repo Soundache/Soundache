@@ -6,15 +6,18 @@
         <link rel=stylesheet href="static/style.css"/>
     </head>
     <body>
-        <div id="column">
-            <div id="home" class="lightbg">
+        <div id="header">
+            <div id="home" class="darkbg">
                 <img src="static/logo.png" width=175/>
             </div>
+            <input id="searchbar" class="darkbg" value="type to search">
+            </input>
         </div>
-        <ul id="songs">
+
+        <!-- <ul id="songs">
             {% for song in songs %}
                 <li>{{ song[0] }}</li>
             {% endfor %}
-        </ul>
+        </ul> -->
     </body>
 </html>
