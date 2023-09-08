@@ -1,24 +1,33 @@
 body {
     background-color: rgb(37, 36, 44);
-    color: yellow;
+    color: white;
 }
 .darkbg {
     background-color: black;
     color:crimson;
     border-radius: 20px;
+    margin: 10px;
 }
 #home {
     width:175px;
-    height: 100px;
     float: left;
+}
+#header * {
+    height: 75px;
 }
 #searchbar {
     width: 700px;
-    border: 0 0;
-    text-align: center;
+    border: 0;
+    text-align: justify;
     float: center;
-    height: 100px;
+    word-wrap:break-word;
+    font-style: italic;
+    font-size:200%;
+    padding: 0px 10px;
 }
-#searchbar :hover {
-    border-color: yellow;
+.input-submitOnEnter {
+    display: none;
+}
+#content {
+    margin: 50px;
 }
