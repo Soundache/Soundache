@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width;">
+        <title>{% block title required%}{%endblock%} - Soundache</title>
+        <link rel=stylesheet href="static/style.css"/>
+    </head>
+    <body>
+        <div id="header">
+            <div id="home" class="darkbg">
+                <img src="static/logo.png" width=175 alt="home-page"/>
+            </div>
+            <form method="post" action="/search">
+                <input id="searchbar" name="searchbar" class="darkbg" placeholder="type to search" aria-label="searchbar"/>
+                <input type="submit" class="input-submitOnEnter"/>
+            </form>
+
+        </div>
+        <div id="content">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </body>
+</html>
