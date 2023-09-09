@@ -2,21 +2,51 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8"/>
-        <meta name="viewport" content="width=device-width;">
+        <meta name="viewport" content="width=device-width">
         <title>{% block title required%}{%endblock%} - Soundache</title>
         <link rel=stylesheet href="static/style.css"/>
+        <script>
+            async function searchChar() {
+                // Emptying searchresults tag each time you type a letter
+                const searchresults = document.getElementById("searchresults");
+                while (searchresults.firstChild){
+                    searchresults.removeChild(searchresults.firstChild);
+                }
+
+                const string = document.getElementById("searchbar").value;
+                const json_ = await fetch("/search?searchbar=" + string.replace(" ", "+"), {
+                    "method": "GET",
+                    "headers": {"API": "true"}  // So that backend doesn't return HTML
+                }).then((request) => request.json());
+                if (json_.results.length == 0) {
+                    const el = document.createElement("li");
+                    el.innerText = "Sorry, couldn't find anything";
+                    searchresults.appendChild(el);
+                    return;
+                }
+                for (result of json_.results) {
+                    const el = document.createElement("li");
+                    el.innerText = result;
+                    searchresults.appendChild(el);
+                }
+            }
+        </script>
     </head>
     <body>
         <div id="header">
             <div id="home" class="darkbg">
                 <img src="static/logo.png" width=175 alt="home-page"/>
             </div>
-            <form method="post" action="/search">
-                <input id="searchbar" name="searchbar" class="darkbg" placeholder="type to search" aria-label="searchbar"/>
+            <form method="get" action="/search">
+                <input id="searchbar" name="searchbar" class="darkbg" enterkeyhint="Search"
+                       placeholder="type to search" aria-label="searchbar" onkeypress="searchChar()"/>
                 <input type="submit" class="input-submitOnEnter"/>
             </form>
 
         </div>
+        <br/>
+        <ul type="disc" id="searchresults"></ul>
+        <br/>
         <div id="content">
             {% block content %}
             {% endblock %}
