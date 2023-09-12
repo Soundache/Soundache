@@ -6,27 +6,40 @@ body {
     background-color: black;
     color:crimson;
     border-radius: 20px;
-    margin: 10px;
-}
-#home {
-    width:175px;
-    float: left;
+    margin: 1%;
 }
 #header * {
     height: 75px;
 }
+#home {
+    width: 10%;
+    float: left;
+}
+#home img {
+    margin: auto;  /* centering the image inside its container */
+    width: 100%
+}
 #searchbar {
-    width: 700px;
-    border: 0;
+    width: 60%;
+    border: none;
+    outline: none;  /* removes white outline when typing */
     text-align: justify;
-    float: center;
     word-wrap:break-word;
     font-style: italic;
-    font-size:200%;
-    padding: 0px 10px;
+    font-size: 200%;
+    padding: 0% 1%;
+    overflow-wrap: normal;
 }
 .input-submitOnEnter {
     display: none;
+}
+#searchresults {
+    position: fixed;  /* make it appear on top of other tags */
+    z-index: 2;       /* ^^ */
+    left: 12%;
+    width: 60%;
+    opacity: 0.7;
+    text-align: center;
 }
 #content {
     margin: 50px;

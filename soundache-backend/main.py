@@ -16,6 +16,8 @@ def main_page():
 @app.route("/search")
 def search():
     query = request.args.get("searchbar")
+    if query is None:
+        return "Invalid query"
     elements = ['Actinium', 'Aluminum', 'Americium', 'Antimony', 'Argon', 'Arsenic', 'Astatine', 'Barium', 'Berkelium', 'Beryllium', 'Bismuth', 'Bohrium', 'Boron', 'Bromine', 'Cadmium', 'Calcium', 'Californium', 'Carbon', 'Cerium', 'Cesium', 'Chlorine', 'Chromium', 'Cobalt', 'Copper', 'Curium', 'Darmstadtium', 'Dubnium', 'Dysprosium', 'Einsteinium', 'Erbium', 'Europium', 'Fermium', 'Fluorine', 'Francium', 'Gadolinium', 'Gallium', 'Germanium', 'Gold', 'Hafnium', 'Hassium', 'Helium', 'Holmium', 'Hydrogen','Indium','Iodine','Iridium','Iron','Krypton','Lanthanum','Lawrencium','Lead','Lithium','Livermorium','Lutetium','Magnesium','Manganese','Meitnerium','Mendelevium','Mercury','Molybdenum','Moscovium','Neodymium','Neon','Neptunium','Nickel','Nihonium','Niobium','Nitrogen','Nobelium','Oganesson','Osmium','Oxygen','Palladium','Phosphorus','Platinum','Plutonium','Polonium','Potassium','Praseodymium','Promethium','Protactinium','Radium','Radon','Rhenium', 'Rhodium'
                 ]
     lst = difflib.get_close_matches(query.capitalize(), elements, 16, min(0.8, 0.1*len(query)))
