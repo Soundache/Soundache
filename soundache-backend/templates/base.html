@@ -34,21 +34,23 @@
     </head>
     <body>
         <div id="header">
-            <div id="home" class="darkbg">
+            <span id="home" class="darkbg">
                 <a href="/">
                     <img src="static/logo.png" alt="home-page"/>
                 </a>
-            </div>
-            <form method="get" action="/search">
-                <input id="searchbar" name="searchbar" class="darkbg" enterkeyhint="Search"
-                       placeholder="type to search" aria-label="searchbar" onkeypress="searchChar()"
-                       required="required"
-                />
-                <input type="submit" class="input-submitOnEnter"/>
-            </form>
-            <div class="darkbg" id="user">
+            </span>
+            <span id="searchbar-container" class="darkbg">
+                <form method="get" action="/search">
+                    <input name="searchbar" enterkeyhint="Search" id="searchbar" 
+                        placeholder="type to search" aria-label="searchbar" onkeypress="searchChar()"
+                        required="required"
+                    />
+                    <input type="submit" class="input-submitOnEnter"/>
+                </form>
+            </span>
+            <span class="darkbg" id="user">
                 <a href="/login">LOGIN</a>
-            </div>
+            </span>
         </div>
         <br/>
         <ul type="none" id="searchresults" class="darkbg"></ul>

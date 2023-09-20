@@ -1,6 +1,5 @@
 body {
-    /* background-color: rgb(29, 29, 29); */
-    background-image: url("cool-background.png") ;
+    background-image: url("cool-background.png");
     background-repeat: no-repeat;
     background-size: cover;
     height: 100%;
@@ -10,43 +9,48 @@ body {
     background-color: rgb(0, 0, 0);
     color:rgb(20, 220, 120);
     border-radius: 20px;
-    margin: 1%;
-}
-#header * {
-    height: 75px;
 }
 #header {
-   display: flex;
-   justify-content: space-between;
+   display: grid;
+   grid-template-columns: 10% 80% 10%;  /* <icon> <searchbar> <sign-in/user-stuff> */
+   gap: 0px 5px;
+   height: 75px;
+   width: 100%;
+   justify-content:space-around;
 }
 #home {
-    width: 10%;
+    height: 100%;
     float: left;
 }
 #home img {
     margin: auto;  /* centering the image inside its container */
-    width: 100%
+    width: 100%;
+    height: 100%;
+}
+#searchbar-container {
+    overflow: hidden;
+    padding: 2% 2% 0% 2%;
 }
 #searchbar {
-    width: 200%;
-    align-self: left;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0); /* transparent bg (using searchbar-container for black bg) */
+    color: rgb(20, 220, 120);  /* fix: background-fill being transparent^ somehow causes text to also be so */
     border: none;
     outline: none;  /* removes white outline when typing */
     text-align: justify;
     word-wrap:break-word;
     font-style: italic;
     font-size: 200%;
-    /* padding: 0% 1%; */
-    overflow-wrap: normal;
 }
 #user {
     float: right;
-    width: 10%;
-    text-align: center;
+    height: 100%;
+    line-height: 75px;  /* centering text vertically */
+    text-align: center;  /* centering text horizontally */
 }
-#user:only-child {
-    margin: auto;  /* centering the content inside its container */
-    width: 100%;
+#user a {
+    color:rgb(20, 220, 120);
 }
 .input-submitOnEnter {
     display: none;
@@ -54,8 +58,8 @@ body {
 #searchresults {
     position: fixed;  /* make it appear on top of other tags */
     z-index: 2;       /* ^^ */
-    left: 12%;
-    width: 60%;
+    left: 10%;
+    width: 75%;
     opacity: 0.7;
     text-align: center;
 }
