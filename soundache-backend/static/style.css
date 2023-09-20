@@ -1,15 +1,23 @@
 body {
-    background-color: rgb(37, 36, 44);
+    /* background-color: rgb(29, 29, 29); */
+    background-image: url("cool-background.png") ;
+    background-repeat: no-repeat;
+    background-size: cover;
+    height: 100%;
     color: white;
 }
 .darkbg {
-    background-color: black;
-    color:crimson;
+    background-color: rgb(0, 0, 0);
+    color:rgb(20, 220, 120);
     border-radius: 20px;
     margin: 1%;
 }
 #header * {
     height: 75px;
+}
+#header {
+   display: flex;
+   justify-content: space-between;
 }
 #home {
     width: 10%;
@@ -20,15 +28,25 @@ body {
     width: 100%
 }
 #searchbar {
-    width: 60%;
+    width: 200%;
+    align-self: left;
     border: none;
     outline: none;  /* removes white outline when typing */
     text-align: justify;
     word-wrap:break-word;
     font-style: italic;
     font-size: 200%;
-    padding: 0% 1%;
+    /* padding: 0% 1%; */
     overflow-wrap: normal;
+}
+#user {
+    float: right;
+    width: 10%;
+    text-align: center;
+}
+#user:only-child {
+    margin: auto;  /* centering the content inside its container */
+    width: 100%;
 }
 .input-submitOnEnter {
     display: none;
