@@ -33,3 +33,6 @@ def login():
     else:  # request.method = POST
         print(request.form["email"], request.form["password"])
         return "BOO"
+
+if __name__ == "__main__":
+    app.run(debug=False, port = 6000)
