@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Sign In{% endblock %}
+{% block content %}
+    <form action="/register" method="post">
+        <label>Email: <input name="email"/> </label> <br/>
+        <label>Password: <input name="password" type="password"/> </label> <br/>
+        <input type="submit"/>
+    </form>
+    <a href="/login">Login instead?</a>
+{% endblock %}

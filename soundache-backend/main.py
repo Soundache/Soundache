@@ -31,6 +31,9 @@ class User(db.Model):
 
 @app.route("/")
 def main_page():
+    # db.session.add(User(id=HASH_STR_64('ADMIN'), email='ADMIN', passwordHash=generate_password_hash('vvsafepswd'), taste=''))
+    # db.session.commit()
+    # print(db.session.execute(db.select(User.passwordHash)).scalar_one_or_none())
     return render_template("index.html", songs=[])
 
 @app.route("/search")
@@ -65,11 +68,29 @@ def login():
                 return jsonify(), 200
             else:
                 return jsonify(error="Wrong password"), 403
-    else:
-        return 'wat'
+    return jsonify(error="This endpoint only supports GET and POST"), 400
+    
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "GET":
+        return render_template("register.html")
+    elif request.method == "POST":
+        user_exists = db.session.execute(
+            db.select(User.email).where(User.id == HASH_STR_64(request.form['email']))
+        ).scalar_one_or_none()
+        if user_exists:
+            return jsonify(error="User already exists"), 409
+        new_user = User(id=HASH_STR_64(request.form['email']),
+                        email=request.form['email'],
+                        passwordHash=generate_password_hash(request.form['password']),
+                        taste="")
+        db.session.add(new_user)
+        db.session.commit()
+        return jsonify(), 200
+    return jsonify(error="This endpoint only supports GET and POST"), 400
 
 with app.app_context():
     db.create_all()
 
 if __name__ == "__main__":
-    app.run(debug=False, port=5000)
+    app.run(debug=True, port=5000)
