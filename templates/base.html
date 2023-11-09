@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8"/>
         <meta name="viewport" content="width=device-width">
-        <title>{% block title required%}{%endblock%} - Soundache</title>
+        <title>{% block title required%}{% endblock %} - Soundache</title>
         <link rel=stylesheet href="static/style.css"/>
         <script>
             async function searchChar() {
@@ -49,7 +49,15 @@
                 </form>
             </span>
             <span class="darkbg" id="user">
-                <a href="/login">LOGIN</a>
+                {% if session.get('email') %}
+                    <a href="/login">
+                        {{ session['email'] }}
+                    </a>
+                {% else %}
+                    <a href="/login">
+                        LOGIN
+                    </a>
+                {% endif %}
             </span>
         </div>
         <br/>

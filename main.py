@@ -5,11 +5,13 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy import Integer, String, LargeBinary, BINARY
 import difflib
 import metrohash
+import secrets
 
 SOUNDACHE = "Soundache"
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
+app.secret_key = secrets.token_hex()  # TODO: move to TOML file
 db = SQLAlchemy()
 db.init_app(app)
 
@@ -31,7 +33,7 @@ class User(db.Model):
 
 @app.route("/")
 def main_page():
-    return render_template("index.html", songs=[])
+    return render_template("index.html", songs=[], session=session)
 
 @app.route("/search")
 def search():
@@ -39,7 +41,7 @@ def search():
     is_API_call = request.headers.get("API", default=False)
     if query is None:
         if not is_API_call:
-            return render_template("search.html", string="Start typing yo")
+            return render_template("search.html", string="Start typing yo", session=session)
         else:
             return jsonify(error="No search query provided"), 400
     elements = ['Actinium', 'Aluminum', 'Americium', 'Antimony', 'Argon', 'Arsenic', 'Astatine', 'Barium', 'Berkelium', 'Beryllium', 'Bismuth', 'Bohrium', 'Boron', 'Bromine', 'Cadmium', 'Calcium', 'Californium', 'Carbon', 'Cerium', 'Cesium', 'Chlorine', 'Chromium', 'Cobalt', 'Copper', 'Curium', 'Darmstadtium', 'Dubnium', 'Dysprosium', 'Einsteinium', 'Erbium', 'Europium', 'Fermium', 'Fluorine', 'Francium', 'Gadolinium', 'Gallium', 'Germanium', 'Gold', 'Hafnium', 'Hassium', 'Helium', 'Holmium', 'Hydrogen','Indium','Iodine','Iridium','Iron','Krypton','Lanthanum','Lawrencium','Lead','Lithium','Livermorium','Lutetium','Magnesium','Manganese','Meitnerium','Mendelevium','Mercury','Molybdenum','Moscovium','Neodymium','Neon','Neptunium','Nickel','Nihonium','Niobium','Nitrogen','Nobelium','Oganesson','Osmium','Oxygen','Palladium','Phosphorus','Platinum','Plutonium','Polonium','Potassium','Praseodymium','Promethium','Protactinium','Radium','Radon','Rhenium', 'Rhodium'
@@ -48,12 +50,12 @@ def search():
 
     if is_API_call:
         return {"results": lst}
-    return render_template("search.html", string=f"You searched {query}{lst}")
+    return render_template("search.html", string=f"You searched {query}{lst}", session=session)
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "GET":
-        return render_template("login.html")
+        return render_template("login.html", session=session)
     elif request.method == "POST":
         pwd_hash = db.session.execute(
             db.select(User.passwordHash).where(User.id == HASH_STR_64(request.form['email']))
@@ -62,9 +64,8 @@ def login():
             return jsonify(error="Either email or password is wrong"), 403
         else:
             if check_password_hash(pwd_hash, request.form["password"]):
-                res = make_response()
-                #res.set_cookie()
-                return res
+                session['email'] = request.form["email"]
+                return jsonify(), 200
             else:
                 return jsonify(error="Either email or password is wrong"), 403
     return jsonify(error="This endpoint only supports GET and POST"), 405
@@ -72,7 +73,7 @@ def login():
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "GET":
-        return render_template("register.html")
+        return render_template("register.html", session=session)
     elif request.method == "POST":
         user_exists = db.session.execute(
             db.select(User.email).where(User.id == HASH_STR_64(request.form['email']))
@@ -85,6 +86,7 @@ def register():
                         taste="")
         db.session.add(new_user)
         db.session.commit()
+        session['email'] = request.form["email"]
         return jsonify(), 200
     return jsonify(error="This endpoint only supports GET and POST"), 405
 

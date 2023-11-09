@@ -50,6 +50,7 @@ body {
 }
 a {
     color:rgb(220, 190, 20);
+    text-decoration: none;
 }
 .input-submitOnEnter {
     display: none;
