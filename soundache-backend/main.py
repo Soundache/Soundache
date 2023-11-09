@@ -51,7 +51,7 @@ def search():
 
     if is_API_call:
         return {"results": lst}
-    return render_template("search.html", string=f"You searched {query}<br/>{lst}")
+    return render_template("search.html", string=f"You searched {query}{lst}")
 
 @app.route("/login", methods=["GET", "POST"])
 def login():

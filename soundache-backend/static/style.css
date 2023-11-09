@@ -49,8 +49,8 @@ body {
     line-height: 75px;  /* centering text vertically */
     text-align: center;  /* centering text horizontally */
 }
-#user a {
-    color:rgb(20, 220, 120);
+a {
+    color:rgb(220, 190, 20);
 }
 .input-submitOnEnter {
     display: none;
