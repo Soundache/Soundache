@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, abort, jsonify, session, url_for, send_from_directory, send_file
+from flask import Flask, render_template, request, abort, jsonify, session, make_response
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -31,9 +31,6 @@ class User(db.Model):
 
 @app.route("/")
 def main_page():
-    # db.session.add(User(id=HASH_STR_64('ADMIN'), email='ADMIN', passwordHash=generate_password_hash('vvsafepswd'), taste=''))
-    # db.session.commit()
-    # print(db.session.execute(db.select(User.passwordHash)).scalar_one_or_none())
     return render_template("index.html", songs=[])
 
 @app.route("/search")
@@ -62,13 +59,15 @@ def login():
             db.select(User.passwordHash).where(User.id == HASH_STR_64(request.form['email']))
         ).scalar_one_or_none()
         if pwd_hash is None:
-            return jsonify(error="No such email-ID has been registered", email=request.form['email']), 403
+            return jsonify(error="Either email or password is wrong"), 403
         else:
             if check_password_hash(pwd_hash, request.form["password"]):
-                return jsonify(), 200
+                res = make_response()
+                #res.set_cookie()
+                return res
             else:
-                return jsonify(error="Wrong password"), 403
-    return jsonify(error="This endpoint only supports GET and POST"), 400
+                return jsonify(error="Either email or password is wrong"), 403
+    return jsonify(error="This endpoint only supports GET and POST"), 405
     
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -87,7 +86,7 @@ def register():
         db.session.add(new_user)
         db.session.commit()
         return jsonify(), 200
-    return jsonify(error="This endpoint only supports GET and POST"), 400
+    return jsonify(error="This endpoint only supports GET and POST"), 405
 
 with app.app_context():
     db.create_all()

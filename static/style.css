@@ -7,7 +7,6 @@ body {
 }
 .darkbg {
     background-color: rgb(0, 0, 0);
-    color:rgb(20, 220, 120);
     border-radius: 20px;
 }
 #header {
@@ -56,6 +55,7 @@ a {
     display: none;
 }
 #searchresults {
+    color:rgb(20, 220, 120);
     position: fixed;  /* make it appear on top of other tags */
     z-index: 2;       /* ^^ */
     left: 10%;

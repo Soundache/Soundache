@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Sign In{% endblock %}
+{% block content %}
+    <h2>Log in</h2>
+    <form id="user-info-form">
+        <label>Email: <input name="email"/> </label> <br/>
+        <label>Password: <input name="password" type="password"/> </label> <br/>
+        <input type="submit"/>
+    </form>
+    <a href="/register">Register instead?</a>
+    <div id="error-log"> </div>
+
+    <template id="login-success">
+        <p>
+            &#x2705 Logged in! 
+        </p>
+    </template>
+    <template id="login-fail">
+        <p>
+            &#x274C Login failed. Either the user does not exist or the password is incorrect.
+        </p>
+    </template>
+    <script>
+        const form = document.getElementById("user-info-form");
+        const err_log = document.getElementById("error-log");
+        async function login(event) {
+            event.preventDefault();
+            while (err_log.firstChild) {
+                err_log.removeChild(err_log.lastChild);
+            }
+            const user_info = new FormData(form);
+            const res = await fetch('/login', {
+                method: 'POST',
+                body: user_info
+            });
+            if (res.status == 200) 
+                var template_id = 'login-success';
+            else if (res.status == 403)
+                var template_id = 'login-fail';
+            else
+                return;
+            let template = document.getElementById(template_id).content.cloneNode(true);
+            err_log.appendChild(template);
+        }
+        form.addEventListener('submit', login);
+    </script>
+{% endblock %}

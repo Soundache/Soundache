@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Sign In{% endblock %}
+{% block content %}
+    <h2>Sign up!</h2>
+    <form id="user-info-form">
+        <label>Email: <input name="email"/> </label> <br/>
+        <label>Password: <input name="password" type="password"/> </label> <br/>
+        <input type="submit"/>
+    </form>
+    <a href="/login">Login instead?</a>
+    <div id="error-log"> </div>
+
+    <template id="reg-success">
+        <p>
+            &#x2705 Registered! 
+        </p>
+    </template>
+    <template id="reg-fail">
+        <p>
+            &#x274C User already exists, impostor.
+        </p>
+    </template>
+    <script>
+        const form = document.getElementById("user-info-form");
+        const err_log = document.getElementById("error-log");
+        async function register(event) {
+            event.preventDefault();
+            while (err_log.firstChild) {
+                err_log.removeChild(err_log.lastChild);
+            }
+            const user_info = new FormData(form);
+            const res = await fetch('/register', {
+                method: 'POST',
+                body: user_info
+            });
+            if (res.status == 200) 
+                var template_id = 'reg-success';
+            else if (res.status == 409)
+                var template_id = 'reg-fail';
+            else
+                return;
+            let template = document.getElementById(template_id).content.cloneNode(true);
+            err_log.appendChild(template);
+        }
+        form.addEventListener('submit', register);
+    </script>
+{% endblock %}
