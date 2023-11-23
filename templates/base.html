@@ -50,9 +50,9 @@
             </span>
             <span class="darkbg" id="user">
                 {% if session.get('email') %}
-                    <a href="/login">
-                        {{ session['email'] }}
-                    </a>
+                    <select href="/login" name= {{ session['email'] }}>
+                        <option><a href="logout">Logout</a></option>
+                    </select>
                 {% else %}
                     <a href="/login">
                         LOGIN

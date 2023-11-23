@@ -31,6 +31,12 @@ class User(db.Model):
     passwordHash: Mapped[str] = mapped_column(String, nullable=False)
     taste: Mapped[str] = mapped_column(String)
 
+class Music(db.Model):
+    id: Mapped[int] = mapped_column(Integer)
+    name: Mapped[str] = mapped_column(String, primary_key=True)
+    thumbnail: Mapped[bytes] = mapped_column(LargeBinary)
+    audio: Mapped[bytes] = mapped_column(LargeBinary)
+
 @app.route("/")
 def main_page():
     return render_template("index.html", songs=[], session=session)
@@ -88,7 +94,11 @@ def register():
         db.session.commit()
         session['email'] = request.form["email"]
         return jsonify(), 200
-    return jsonify(error="This endpoint only supports GET and POST"), 405
+    return jsonify(error="This endpoint only supports GET and POST"), 405 
+
+@app.route("/playback")
+def playback():
+    return render_template("playback.html", thumbnail=None, audio=None)
 
 with app.app_context():
     db.create_all()
