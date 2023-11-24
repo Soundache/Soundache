@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, abort, jsonify, session, make_response
+from flask import Flask, render_template, request, abort, jsonify, session, make_response, redirect
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -6,36 +6,24 @@ from sqlalchemy import Integer, String, LargeBinary, BINARY
 import difflib
 import metrohash
 import secrets
+import toml
 
 SOUNDACHE = "Soundache"
+SECRETS = toml.load('instance/secrets.toml')
 
-app = Flask(__name__)
+app = Flask(SOUNDACHE)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
-app.secret_key = secrets.token_hex()  # TODO: move to TOML file
+app.secret_key = SECRETS['secret_key']   # secrets.token_hex()
 db = SQLAlchemy()
 db.init_app(app)
 
 HASH_STR_64 = lambda s: metrohash.hash64_int(s, seed=0) // 2
-
-class Song(db.Model):
-    name: Mapped[str] = mapped_column(String, nullable=False)
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    artistID: Mapped[int] = mapped_column(Integer)
-    # thumbnail: Mapped = mapped_column(LargeBinary, nullable=True)
-    # midi = mapped_column(LargeBinary)
-    # lyrics = mapped_column(LargeBinary)
 
 class User(db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     email: Mapped[str] = mapped_column(String, nullable=False)
     passwordHash: Mapped[str] = mapped_column(String, nullable=False)
     taste: Mapped[str] = mapped_column(String)
-
-class Music(db.Model):
-    id: Mapped[int] = mapped_column(Integer)
-    name: Mapped[str] = mapped_column(String, primary_key=True)
-    thumbnail: Mapped[bytes] = mapped_column(LargeBinary)
-    audio: Mapped[bytes] = mapped_column(LargeBinary)
 
 @app.route("/")
 def main_page():
@@ -73,6 +61,7 @@ def login():
                 session['email'] = request.form["email"]
                 return jsonify(), 200
             else:
+                session.clear()
                 return jsonify(error="Either email or password is wrong"), 403
     return jsonify(error="This endpoint only supports GET and POST"), 405
     
@@ -99,6 +88,27 @@ def register():
 @app.route("/playback")
 def playback():
     return render_template("playback.html", thumbnail=None, audio=None)
+
+@app.route("/likes")
+def likes():
+    pass
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/")
+
+@app.route("/upload")
+def upload_songs():
+    pass
+
+@app.route("/delete-account")
+def delete_account():
+    if not session.get('email'):
+        return jsonify(error="Need to be logged in to use this"), 403
+    return jsonify("No, dangerous"), 200   # TODO: confirmation
+    db.session.delete(User(id=HASH_STR_64(session['email'])))
+    return redirect("/")
 
 with app.app_context():
     db.create_all()

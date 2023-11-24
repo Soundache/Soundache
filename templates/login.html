@@ -12,7 +12,7 @@
 
     <template id="login-success">
         <p>
-            &#x2705 Logged in! 
+            &#x2705 Logged in! Redirecting...
         </p>
     </template>
     <template id="login-fail">
@@ -41,6 +41,7 @@
                 return;
             let template = document.getElementById(template_id).content.cloneNode(true);
             err_log.appendChild(template);
+            setTimeout(()=>{window.location.replace("/")}, 500);
         }
         form.addEventListener('submit', login);
     </script>
