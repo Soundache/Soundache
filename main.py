@@ -2,7 +2,8 @@ from flask import Flask, render_template, request, abort, jsonify, session, make
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import Integer, String, LargeBinary, BINARY
+from typing import Set, List
+from sqlalchemy import Integer, String, LargeBinary, BINARY, JSON, ForeignKey
 import difflib
 import metrohash
 import secrets
@@ -23,7 +24,21 @@ class User(db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     email: Mapped[str] = mapped_column(String, nullable=False)
     passwordHash: Mapped[str] = mapped_column(String, nullable=False)
-    taste: Mapped[str] = mapped_column(String)
+    # likes: Mapped[List["Music"]] = mapped_column(Integer)
+    # channel: Mapped[List["Music"]] = mapped_column(Integer)
+
+class Music(db.Model):
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    artistId: Mapped[int] = mapped_column(ForeignKey(User.id), primary_key=True)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    link: Mapped[str] = mapped_column(String, nullable=False)
+    views: Mapped[int] = mapped_column(Integer, default=0)
+    likes: Mapped[int] = mapped_column(Integer, default=0)
+    derivativeOf: Mapped[str] = mapped_column(String, nullable=True)
+
+class Keywords(db.Model):
+    keyword: Mapped[str] = mapped_column(String, primary_key=True)
+    # songs: Mapped[Set[Music]] = mapped_column(Set, nullable=False)
 
 @app.route("/")
 def main_page():
@@ -77,8 +92,7 @@ def register():
             return jsonify(error="User already exists"), 409
         new_user = User(id=HASH_STR_64(request.form['email']),
                         email=request.form['email'],
-                        passwordHash=generate_password_hash(request.form['password']),
-                        taste="")
+                        passwordHash=generate_password_hash(request.form['password']))
         db.session.add(new_user)
         db.session.commit()
         session['email'] = request.form["email"]
@@ -93,14 +107,36 @@ def playback():
 def likes():
     pass
 
+@app.route("/my-channel")
+def my_channel():
+    pass
+
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/")
 
-@app.route("/upload")
+@app.route("/upload", methods=['GET', 'POST'])
 def upload_songs():
-    pass
+    if request.method == 'GET':
+        return render_template("upload-song.html")
+    elif request.method == 'POST':
+        artistId = HASH_STR_64(session['email'])
+        songName = request.form['name']
+        id = HASH_STR_64(songName)
+        derivativeOf = request.form['derivativeOf']
+        url = request.form['urlToWork']
+        if request.form['hostIsSoundache'] == 'true':
+            url = ':8000/' + str(id)
+        song_exists = db.session.execute(
+            db.select(Music.id).where(Music.id == id and Music.artistId == artistId)
+        ).scalar_one_or_none()
+        if song_exists:
+            return jsonify(error="Song of same name and from same user already exists!"), 409
+        db.session.add(Music(id=id, name=songName, artistId=artistId, link=url, derivativeOf=derivativeOf))
+        db.session.commit()
+        return jsonify(), 200
+    return jsonify(error="This endpoint only supports GET and POST"), 405 
 
 @app.route("/delete-account")
 def delete_account():

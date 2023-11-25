@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Upload{% endblock %}
+{% block content %}
+    <form id="upload-song-form">
+        <label>Song Name: <input type="text" name="name" required="true"/></label> <br/>
+        <label>This work is a derivative of another work. 
+            <input id="form-derivative-of" type="checkbox" onchange="toggleHide('form-derivative-yes')"/>
+        </label>
+
+        <blockquote id="form-derivative-yes" class="hide">
+            <label>If your song/music is a derivative of another work, paste the link to that work here:
+                <input type="text" title="leave this field empty if not" name="derivativeOf"/>
+            </label> <br/>
+            &nbsp; <em class="red">Make sure the license of the original is okay with derivatives!!!!!</em>
+        </blockquote>
+
+        <br/>
+        <label>I want to host this work at <br/>
+            &nbsp;  <input type="radio" name="hostIsSoundache" value="true" required="true" onchange="hostWorkAtSoundache()">
+                        Soundache
+                    </input> <br/>
+                    <blockquote id="host-at-soundache" class="hide">
+                        <label>
+                            Upload the file (MPEG, WAV, OGG or MIDI): <input type="file" id="songFile"/>
+                        </label> 
+                        <br/>
+                        <label>
+                            Thumbnail (PNG, JPEG, JFIF or GIF): <input type="file" id="thumbnailFile"/>
+                        </label>
+                    </blockquote>
+
+            &nbsp;  <input type="radio" name="hostIsSoundache" value="false" required="true" onchange="hostWorkSomewhereElse()">
+                        3rd party server
+                    </input> <br/>
+                    <blockquote id="host-somewhere-else" class="hide">
+                        <label>
+                            Link to your work: <input type="url" name="urlToWork" id="urlToWork"/>
+                        </label><br/>
+                        &nbsp; <em class="red">
+                            Make the server supports FTP and returns the video file and thumbnail!!
+                        </em>
+                    </blockquote>
+        </label>  <br/>
+
+        <br/>
+        <input type="submit"/>
+    </form>
+    <p id="on-submit" class="hide">
+        &#x2705 Submitted!! It may take a while for your submission to become publicly accessible. <br/>
+        You can see the videos of your channel <a href="/my-channel">here</a>!
+    </p>
+    <p id="on-submit-fail" class="hide">
+        &#x274C Song of same name and from the same user already exists!
+    </p>
+
+    <script>
+        function hostWorkAtSoundache() {
+            show('host-at-soundache');
+            hide('host-somewhere-else');
+            document.getElementById('songFile').setAttribute('required', 'true');
+            document.getElementById('thumbnailFile').setAttribute('required', 'true');
+            document.getElementById('urlToWork').removeAttribute('required');
+        }
+
+        function hostWorkSomewhereElse() {
+            show('host-somewhere-else');
+            hide('host-at-soundache');
+            document.getElementById('songFile').removeAttribute('required');
+            document.getElementById('thumbnailFile').removeAttribute('required');
+            document.getElementById('urlToWork').setAttribute('required', 'true');
+        }
+
+        const form = document.getElementById("upload-song-form");
+        function songServerUpload(event) {
+            event.preventDefault();  // don't reload
+            const songFile = document.getElementById("songFile");
+            const thumbnail = document.getElementById("thumbnailFile");
+            fetch('/upload', {
+                method: 'POST',
+                body: new FormData(form)
+            }).then((res) => res.status == 200 ? show('on-submit') & hide('on-submit-fail') : 
+                                show('on-submit-fail') & hide('on-submit'));
+            console.log(songFile.value, thumbnail.value)
+            // fetch(SOUNDACHE_SONGSERVER+'/upload', {
+            //     method: 'POST',
+            //     body: {
+            //         song: songFile.value,
+            //         thumbnail: thumbnail.value
+            //     }
+            // })
+        }
+        form.addEventListener('submit', songServerUpload);
+    </script>
+{% endblock %}

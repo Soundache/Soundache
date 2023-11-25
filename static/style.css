@@ -75,7 +75,7 @@ a {
     z-index: 2;
     opacity: 0.7;
 }
-#account-options-dangerous,#account-options-dangerous * {
+.red, .red * {
     color: red;
 }
 #account-options-btn {

@@ -6,6 +6,9 @@
         <title>{% block title required%}{% endblock %} - Soundache</title>
         <link rel=stylesheet href="static/style.css"/>
         <script>
+            const SOUNDACHE_SONGSERVER = 
+                window.location.protocol + '//' + window.location.hostname + ':8000';
+
             async function searchChar() {
                 // Emptying searchresults tag each time you type a letter
                 const searchresults = document.getElementById("searchresults");
@@ -31,8 +34,16 @@
                 }
             }
             
-            function toggleActionsDropDown() {
-                document.getElementById("account-options").classList.toggle('hide');
+            function toggleHide(elementId) {
+                document.getElementById(elementId).classList.toggle('hide');
+            }
+
+            function hide(elementId) {
+                document.getElementById(elementId).classList.add('hide');
+            }
+
+            function show(elementId) {
+                document.getElementById(elementId).classList.remove('hide');
             }
         </script>
     </head>
@@ -53,7 +64,7 @@
                 </form>
             </span>
             {% if session.get('email') %}
-                <button onclick="toggleActionsDropDown()" id="account-options-btn" class="darkbg">
+                <button onclick="toggleHide('account-options')" id="account-options-btn" class="darkbg">
                     {{ session['email'] }}
                 </button>
             {% else %}
@@ -70,7 +81,8 @@
             <div id="account-options" class="hide darkbg">
                 <a href="/likes">My Likes</a> <br/>
                 <a href="/upload">Upload Music</a> <br/>
-                <div id="account-options-dangerous">
+                <a href="/my-channel">My Channel</a> <br/>
+                <div id="account-options-dangerous" class="red">
                     <b>Dangerous Zone</b> <br/>
                     &nbsp; <a href="/logout">Logout</a> <br/>
                     &nbsp; <a href="/delete-account">Delete Account</a>
