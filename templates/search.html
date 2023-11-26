@@ -1,5 +1,12 @@
 {% extends "base.html" %}
 {% block title %}Search{% endblock %}
 {% block content %}
-    {{ string }}
+    <ul id="searchresults-no-popup">
+    </ul>
+    <script>
+        let query = window.location.search.match(/\?searchbar\=(.*)/)[1];
+        console.log(query);
+        searchChar(query, "searchresults-no-popup");
+        document.getElementById("searchbar").value = query.replace('%20', ' ').replace('+', ' ');
+    </script>
 {% endblock %}

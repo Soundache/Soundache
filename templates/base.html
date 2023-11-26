@@ -9,19 +9,21 @@
             const SOUNDACHE_SONGSERVER = 
                 window.location.protocol + '//' + window.location.hostname + ':8000';
 
-            async function searchChar() {
+            async function searchChar(search_query, results_tag) {
                 // Emptying searchresults tag each time you type a letter
-                const searchresults = document.getElementById("searchresults");
+                const searchresults = document.getElementById(results_tag);
                 while (searchresults.firstChild){
                     searchresults.removeChild(searchresults.firstChild);
                 }
 
-                const string = document.getElementById("searchbar").value;
-                const json_ = await fetch("/search?searchbar=" + string.replace(" ", "+"), {
-                    "method": "GET",
-                    "headers": {"API": "true"}  // So that backend doesn't return HTML
-                }).then((request) => request.json());
-                if (json_.results.length == 0) {
+                if (!search_query) {
+                    return;
+                }
+                const request = await fetch("/search?searchbar=" + search_query.replace(" ", "+"), {
+                    "method": "POST"
+                });
+                const json_ = await request.json();
+                if (request.status != 200 || json_.results.length == 0) {
                     const el = document.createElement("li");
                     el.innerText = "Sorry, couldn't find anything";
                     searchresults.appendChild(el);
@@ -56,10 +58,9 @@
             </span>
             <span id="searchbar-container" class="darkbg">
                 <form method="get" action="/search">
-                    <input name="searchbar" enterkeyhint="Search" id="searchbar" 
-                        placeholder="type to search" aria-label="searchbar" onkeypress="searchChar()"
-                        required="required"
-                    />
+                    <input name="searchbar" enterkeyhint="Search" id="searchbar" placeholder="type to search" 
+                           aria-label="searchbar" onkeypress="searchChar(this.value, 'searchresults')"
+                           required="required"/>
                     <input type="submit" class="input-submitOnEnter"/>
                 </form>
             </span>

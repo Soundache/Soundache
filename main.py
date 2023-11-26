@@ -44,22 +44,29 @@ class Keywords(db.Model):
 def main_page():
     return render_template("index.html", songs=[], session=session)
 
-@app.route("/search")
+@app.route("/search", methods=["GET", "POST"])
 def search():
-    query = request.args.get("searchbar")
-    is_API_call = request.headers.get("API", default=False)
-    if query is None:
-        if not is_API_call:
-            return render_template("search.html", string="Start typing yo", session=session)
-        else:
+    if request.method == "GET":
+        return render_template("search.html")
+    elif request.method == "POST":
+        query = request.args.get("searchbar")
+        if query is None or query == "":
             return jsonify(error="No search query provided"), 400
-    elements = ['Actinium', 'Aluminum', 'Americium', 'Antimony', 'Argon', 'Arsenic', 'Astatine', 'Barium', 'Berkelium', 'Beryllium', 'Bismuth', 'Bohrium', 'Boron', 'Bromine', 'Cadmium', 'Calcium', 'Californium', 'Carbon', 'Cerium', 'Cesium', 'Chlorine', 'Chromium', 'Cobalt', 'Copper', 'Curium', 'Darmstadtium', 'Dubnium', 'Dysprosium', 'Einsteinium', 'Erbium', 'Europium', 'Fermium', 'Fluorine', 'Francium', 'Gadolinium', 'Gallium', 'Germanium', 'Gold', 'Hafnium', 'Hassium', 'Helium', 'Holmium', 'Hydrogen','Indium','Iodine','Iridium','Iron','Krypton','Lanthanum','Lawrencium','Lead','Lithium','Livermorium','Lutetium','Magnesium','Manganese','Meitnerium','Mendelevium','Mercury','Molybdenum','Moscovium','Neodymium','Neon','Neptunium','Nickel','Nihonium','Niobium','Nitrogen','Nobelium','Oganesson','Osmium','Oxygen','Palladium','Phosphorus','Platinum','Plutonium','Polonium','Potassium','Praseodymium','Promethium','Protactinium','Radium','Radon','Rhenium', 'Rhodium'
-                ]
-    lst = difflib.get_close_matches(query.capitalize(), elements, 16, min(0.8, 0.1*len(query)))
-
-    if is_API_call:
-        return {"results": lst}
-    return render_template("search.html", string=f"You searched {query}{lst}", session=session)
+        elements = ['Actinium', 'Aluminum', 'Americium', 'Antimony', 'Argon', 'Arsenic', 'Astatine', 
+                    'Barium', 'Berkelium', 'Beryllium', 'Bismuth', 'Bohrium', 'Boron', 'Bromine', 
+                    'Cadmium', 'Calcium', 'Californium', 'Carbon', 'Cerium', 'Cesium', 'Chlorine', 'Chromium', 'Cobalt', 'Copper', 'Curium', 
+                    'Darmstadtium', 'Dubnium', 'Dysprosium', 'Einsteinium', 'Erbium', 'Europium', 'Fermium', 'Fluorine', 'Francium', 
+                    'Gadolinium', 'Gallium', 'Germanium', 'Gold', 'Hafnium', 'Hassium', 'Helium', 'Holmium', 'Hydrogen',
+                    'Indium','Iodine','Iridium','Iron',
+                    'Krypton','Lanthanum','Lawrencium','Lead','Lithium','Livermorium','Lutetium',
+                    'Magnesium','Manganese','Meitnerium','Mendelevium','Mercury','Molybdenum','Moscovium',
+                    'Neodymium','Neon','Neptunium','Nickel','Nihonium','Niobium','Nitrogen','Nobelium','Oganesson','Osmium','Oxygen',
+                    'Palladium','Phosphorus','Platinum','Plutonium','Polonium','Potassium','Praseodymium','Promethium','Protactinium',
+                    'Radium','Radon','Rhenium', 'Rhodium'
+                    ]
+        lst = difflib.get_close_matches(query.capitalize(), elements, 16, min(0.8, 0.1*len(query)))
+        return jsonify(results=lst), 200
+    return jsonify(error="This endpoint only supports GET and POST"), 405
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
