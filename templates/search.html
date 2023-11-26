@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Search{% endblock %}
 {% block content %}
-    <ul id="searchresults-no-popup">
+    <ul id="searchresults-no-popup" type="none">
     </ul>
     <script>
         let query = window.location.search.match(/\?searchbar\=(.*)/)[1];
