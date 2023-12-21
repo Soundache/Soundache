@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Upload{% endblock %}
 {% block content %}
+    <div id="good-font">
     <form id="upload-song-form">
         <label>Song Name: <input type="text" name="name" required="true"/></label> <br/>
         <label>This work is a derivative of another work. 
@@ -52,7 +53,7 @@
     <p id="on-submit-fail" class="hide">
         &#x274C Song of same name and from the same user already exists!
     </p>
-
+</div>
     <script>
         function hostWorkAtSoundache() {
             show('host-at-soundache');
