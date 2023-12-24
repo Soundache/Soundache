@@ -1,9 +1,7 @@
 body {
-     background-image: url("music background disc.jpg"); 
-    /* background-color: rgb(58, 26, 26); */
+    background-image: url("music background disc.jpg"); 
     background-repeat: no-repeat;
-    background-size: cover;
-    height: 100%;
+    background-size:cover;
     color: white;
 }
 .darkbg {
@@ -31,16 +29,23 @@ body {
     overflow: hidden;
     padding: 2% 2% 0% 2%;
 }
+input {
+    background-color: black;
+    color: rgb(20, 220, 120);
+    font-style: italic;
+    border: none;
+    outline: none;
+}
+input:not(#searchbar) {
+    border-radius:  10px;
+    padding: 0.5% 0.5% 0.5% 0.5%;
+    font-size: medium;
+}
 #searchbar {
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0); /* transparent bg (using searchbar-container for black bg) */
-    color: rgb(20, 220, 120);  /* fix: background-fill being transparent^ somehow causes text to also be so */
-    border: none;
-    outline: none;  /* removes white outline when typing */
     text-align: justify;
     word-wrap:break-word;
-    font-style: italic;
     font-size: 200%;
 }
 #user {
@@ -89,9 +94,37 @@ a {
 #content {
     margin: 50px;
     padding: 2% 2% 2% 2%;
-}
-#good-font {
     text-align: left;
     font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
     font-size:large;
+}
+.song-grid {
+    display: grid;
+    grid-template-columns: 30% 30% 30%;
+    gap: 10px;
+}
+.songThumbnailGrid {
+    display: grid;
+    grid-template-areas: 'song_title  song_title'
+                         'artist_name artist_name'
+                         'views       likes';
+    width: 10%;
+    margin: 1% 1% 1% 1%;
+}
+.songTitle {
+    grid-area: song_title;
+    font-size: medium;
+}
+.artistName {
+    grid-area: artist_name;
+    font-size: small;
+}
+.views {
+    grid-area: views;
+    font-size: small;
+}
+.likes {
+    grid-area: likes;
+    font-size: small;
+    text-align: right;
 }

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Channel {{artistName}}{% endblock %}
+{% block content %}
+    {% if has_songs %}
+        Nothing to show :( <br/> <br/>
+        Wanna upload some cool songs?  Sign in (if you haven't already) and do it <a href="/upload">here</a>.
+    {% else %}
+        <h1>{{ artistName }}</h1>
+        <div id="song-grid">
+            {% for song in songs %}
+                <a class="songThumbnailGrid" href="{{song.link}}">
+                    <span class="songTitle">
+                        {{ song.name }}
+                    </span>
+                    <span class="artistName">
+                        {{ artistName }}
+                    </span>
+                    <span class="views">
+                        {{ song.views }} &#x1F441
+                    </span>
+                    <span class="likes">
+                        {{ song.likes }} &#128151
+                    </span>
+                </a>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}

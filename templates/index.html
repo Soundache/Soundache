@@ -1,9 +1,22 @@
 {% extends "base.html" %}
 {% block title %}Main Page{%endblock%}
 {% block content %}
-    <ul>
-        {% for song in songs %}
-            <li>{{ song }}</li>
-        {% endfor %}
-    </ul>
+    <div id="song-grid">
+    {% for artist, song in songs %}
+        <a class="songThumbnailGrid" href="{{song.link}}">
+            <span class="songTitle">
+                {{ song.name }}
+            </span>
+            <span class="artistName">
+                {{ artist.split('@')[0] }}
+            </span>
+            <span class="views">
+                {{ song.views }} &#x1F441
+            </span>
+            <span class="likes">
+                {{ song.likes }} &#128151
+            </span>
+        </a>
+    {% endfor %}
+    </div>
 {%endblock%}

@@ -1,7 +1,8 @@
 from flask import Flask, render_template, request, abort, jsonify, session, make_response, redirect
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from flask_mail import Mail
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, backref
 from typing import Set, List
 from sqlalchemy import Integer, String, LargeBinary, BINARY, JSON, ForeignKey
 import difflib
@@ -21,11 +22,13 @@ db.init_app(app)
 HASH_STR_64 = lambda s: metrohash.hash64_int(s, seed=0) // 2
 
 class User(db.Model):
+    __tablename__ = "user"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     email: Mapped[str] = mapped_column(String, nullable=False)
     passwordHash: Mapped[str] = mapped_column(String, nullable=False)
     # likes: Mapped[List["Music"]] = mapped_column(Integer)
     # channel: Mapped[List["Music"]] = mapped_column(Integer)
+    # channel = relationship()
 
 class Music(db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -34,6 +37,8 @@ class Music(db.Model):
     link: Mapped[str] = mapped_column(String, nullable=False)
     views: Mapped[int] = mapped_column(Integer, default=0)
     likes: Mapped[int] = mapped_column(Integer, default=0)
+    # dislikes: Mapped[int] = mapped_column(Integer, default=0)
+    # thumnail: Mapped[bytes] = mapped_column(BINARY)
     derivativeOf: Mapped[str] = mapped_column(String, nullable=True)
 
 class Keywords(db.Model):
@@ -42,7 +47,10 @@ class Keywords(db.Model):
 
 @app.route("/")
 def main_page():
-    return render_template("index.html", songs=[], session=session)
+    songs = db.session.execute(
+        db.select(User.email, Music).where(User.id == Music.artistId).order_by(Music.views, Music.likes)
+    ).fetchmany(16)
+    return render_template("index.html", songs=songs)
 
 @app.route("/search", methods=["GET", "POST"])
 def search():
@@ -114,9 +122,22 @@ def playback():
 def likes():
     pass
 
-@app.route("/my-channel")
-def my_channel():
-    pass
+@app.route("/user", methods=['GET', 'POST'])
+def user():
+    userID = request.args.get('id')
+    if not userID:
+        userID = session.get('email')
+        if not userID:
+            if request.method == 'GET':
+                return render_template("user.html", has_songs=True, artistName='')
+            else:
+                return jsonify(error="Must either be signed in or provide a query string!"), 403
+    songs = db.session.execute(
+        db.select(Music.id, Music.name, Music.link, Music.views, Music.likes).where(Music.artistId == HASH_STR_64(userID))
+    ).all()
+    if request.method == 'GET':
+        return render_template("user.html", songs=songs, has_songs=len(songs)==0, artistName=userID.split('@')[0])
+    return {songs: songs}, 200
 
 @app.route("/logout")
 def logout():
@@ -132,7 +153,7 @@ def upload_songs():
         songName = request.form['name']
         id = HASH_STR_64(songName)
         derivativeOf = request.form['derivativeOf']
-        url = request.form['urlToWork']
+        url = request.form['urlToWork'].removesuffix('/')
         if request.form['hostIsSoundache'] == 'true':
             url = ':8000/' + str(id)
         song_exists = db.session.execute(
@@ -143,18 +164,10 @@ def upload_songs():
         db.session.add(Music(id=id, name=songName, artistId=artistId, link=url, derivativeOf=derivativeOf))
         db.session.commit()
         return jsonify(), 200
-    return jsonify(error="This endpoint only supports GET and POST"), 405 
-
-@app.route("/delete-account")
-def delete_account():
-    if not session.get('email'):
-        return jsonify(error="Need to be logged in to use this"), 403
-    return jsonify("No, dangerous"), 200   # TODO: confirmation
-    db.session.delete(User(id=HASH_STR_64(session['email'])))
-    return redirect("/")
+    return jsonify(error="This endpoint only supports GET and POST"), 405
 
 with app.app_context():
     db.create_all()
 
 if __name__ == "__main__":
-    app.run(debug=True, port=4000)
+    app.run(debug=True, port=5000)

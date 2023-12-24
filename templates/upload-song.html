@@ -3,14 +3,14 @@
 {% block content %}
     <div id="good-font">
     <form id="upload-song-form">
-        <label>Song Name: <input type="text" name="name" required="true"/></label> <br/>
+        <label>Song Name: <input type="text" name="name" required="true" id="songNAME"/></label> <br/>
         <label>This work is a derivative of another work. 
             <input id="form-derivative-of" type="checkbox" onchange="toggleHide('form-derivative-yes')"/>
         </label>
 
         <blockquote id="form-derivative-yes" class="hide">
             <label>If your song/music is a derivative of another work, paste the link to that work here:
-                <input type="text" title="leave this field empty if not" name="derivativeOf"/>
+                <input type="url" title="leave this field empty if not" name="derivativeOf"/>
             </label> <br/>
             &nbsp; <em class="red">Make sure the license of the original is okay with derivatives!!!!!</em>
         </blockquote>
@@ -22,11 +22,13 @@
                     </input> <br/>
                     <blockquote id="host-at-soundache" class="hide">
                         <label>
-                            Upload the file (MPEG, WAV, OGG or MIDI): <input type="file" id="songFile"/>
+                            Upload the audio file (MPEG, WAV, OGG): 
+                                <input type="file" id="songFile" accept="audio/*" name="song-file"/>
                         </label> 
                         <br/>
                         <label>
-                            Thumbnail (PNG, JPEG, JFIF or GIF): <input type="file" id="thumbnailFile"/>
+                            Thumbnail (PNG, JPEG, JFIF, GIF): 
+                                <input type="file" id="thumbnailFile" accept="image/*" name="thumbnail-file"/>
                         </label>
                     </blockquote>
 
@@ -48,7 +50,7 @@
     </form>
     <p id="on-submit" class="hide">
         &#x2705 Submitted!! It may take a while for your submission to become publicly accessible. <br/>
-        You can see the videos of your channel <a href="/my-channel">here</a>!
+        You can see the videos of your channel <a href="/user">here</a>!
     </p>
     <p id="on-submit-fail" class="hide">
         &#x274C Song of same name and from the same user already exists!
@@ -74,21 +76,22 @@
         const form = document.getElementById("upload-song-form");
         function songServerUpload(event) {
             event.preventDefault();  // don't reload
-            const songFile = document.getElementById("songFile");
-            const thumbnail = document.getElementById("thumbnailFile");
+            let formData = new FormData(form);
+            let copyFormData = new FormData(form);
+            formData.delete('song-file');
+            formData.delete('thumbnail-file');
             fetch('/upload', {
                 method: 'POST',
-                body: new FormData(form)
+                body: formData
             }).then((res) => res.status == 200 ? show('on-submit') & hide('on-submit-fail') : 
                                 show('on-submit-fail') & hide('on-submit'));
-            console.log(songFile.value, thumbnail.value)
-            // fetch(SOUNDACHE_SONGSERVER+'/upload', {
-            //     method: 'POST',
-            //     body: {
-            //         song: songFile.value,
-            //         thumbnail: thumbnail.value
-            //     }
-            // })
+            // console.log(sessionStorage.get('email'))
+            copyFormData.append('email', 'huh');
+            fetch(SOUNDACHE_SONGSERVER+'/upload', {
+                method: 'POST',
+                mode: 'cors',
+                body: copyFormData
+            })
         }
         form.addEventListener('submit', songServerUpload);
     </script>
