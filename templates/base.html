@@ -8,10 +8,14 @@
         <script>
             const DEPLOYED = false;   // TODO: CHANGE BEFORE DEPLOYING
             let SOUNDACHE_SONGSERVER;
+            const SERVER = window.location.protocol + '//' + window.location.hostname;
             if (DEPLOYED)
-                SOUNDACHE_SONGSERVER = window.location.protocol + '//' + window.location.hostname + ':8000';
+                SOUNDACHE_SONGSERVER = SERVER + ':8000';
             else
-                SOUNDACHE_SONGSERVER = window.location.protocol + '//' + window.location.hostname.replace('5000', '8000');
+                SOUNDACHE_SONGSERVER = SERVER.replace('5000', '8000');
+
+            // Used in upload-song.html when submitting to songserver
+            const USERNAME = "{{ session.get('email') or '' }}";
 
             async function searchChar(search_query, results_tag) {
                 // Emptying searchresults tag each time you type a letter

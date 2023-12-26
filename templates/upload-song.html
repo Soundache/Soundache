@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Upload{% endblock %}
 {% block content %}
+    {% if not session.get('email') %}
+    You need to be <a href="/login">signed in</a> to upload, dummy.
+    {% else %}
     <div id="good-font">
     <form id="upload-song-form">
         <label>Song Name: <input type="text" name="name" required="true" id="songNAME"/></label> <br/>
@@ -80,19 +83,33 @@
             let copyFormData = new FormData(form);
             formData.delete('song-file');
             formData.delete('thumbnail-file');
+
             fetch('/upload', {
                 method: 'POST',
                 body: formData
-            }).then((res) => res.status == 200 ? show('on-submit') & hide('on-submit-fail') : 
-                                show('on-submit-fail') & hide('on-submit'));
-            // console.log(sessionStorage.get('email'))
-            copyFormData.append('email', 'huh');
-            fetch(SOUNDACHE_SONGSERVER+'/upload', {
-                method: 'POST',
-                mode: 'cors',
-                body: copyFormData
-            })
+            }).then((res) => {
+                let success = (res.status == 200);
+                if (success) {
+                    show('on-submit');
+                    hide('on-submit-fail');
+                } else {
+                    show('on-submit-fail');
+                    hide('on-submit');
+                }
+                
+                if ((formData.get('hostIsSoundache') == 'true') && success) {
+                    copyFormData.append('email', USERNAME);
+                    copyFormData.delete('derivativeOf');
+                    copyFormData.delete('hostIsSoundache');
+                    copyFormData.delete('urlToWork');
+                    fetch(SOUNDACHE_SONGSERVER+'/upload', {
+                            method: 'POST',
+                            body: copyFormData
+                        });
+                }
+            });
         }
         form.addEventListener('submit', songServerUpload);
     </script>
+    {% endif %}
 {% endblock %}

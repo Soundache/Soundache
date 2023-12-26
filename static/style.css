@@ -98,18 +98,27 @@ a {
     font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
     font-size:large;
 }
-.song-grid {
+#song-grid {
     display: grid;
-    grid-template-columns: 30% 30% 30%;
-    gap: 10px;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
 }
 .songThumbnailGrid {
     display: grid;
-    grid-template-areas: 'song_title  song_title'
-                         'artist_name artist_name'
-                         'views       likes';
-    width: 10%;
-    margin: 1% 1% 1% 1%;
+    grid-template-areas:'thumbnail   thumbnail'
+                        /* 'thumbnail   thumbnail'
+                        'thumbnail   thumbnail'
+                        'thumbnail   thumbnail' */
+                        'song_title  song_title'
+                        'artist_name artist_name'
+                        'views       likes';
+    width: 75%;
+    margin: 2% 2% 2% 2%;
+}
+.thumbnail {
+    grid-area: thumbnail;
+    width: 100px;
+    height: 50px;
+    margin: auto;
 }
 .songTitle {
     grid-area: song_title;

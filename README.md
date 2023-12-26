@@ -1,7 +1,8 @@
 # Instructions to run the server (in Github Codespace)
 To run the application:
 ```cmd
-flask --app main run
+python main.py
+python songserver.py
 ```
 
 To install required packages:

@@ -1,14 +1,19 @@
 {% extends "base.html" %}
 {% block title %}Channel {{artistName}}{% endblock %}
 {% block content %}
-    {% if has_songs %}
+    {% if no_such_user %}
+        No such user exists!
+    {% elif has_no_songs and not artistName %}
         Nothing to show :( <br/> <br/>
         Wanna upload some cool songs?  Sign in (if you haven't already) and do it <a href="/upload">here</a>.
+    {% elif has_no_songs %}
+        <b class="red"><i>{{ artistName }}</i></b> has no songs, unfortunately.
     {% else %}
         <h1>{{ artistName }}</h1>
         <div id="song-grid">
             {% for song in songs %}
-                <a class="songThumbnailGrid" href="{{song.link}}">
+                <a class="songThumbnailGrid" href="/playback?watch={{song.id}}">
+                    <img src="{{song.link}}/thumbnail" class="thumbnail"/>
                     <span class="songTitle">
                         {{ song.name }}
                     </span>

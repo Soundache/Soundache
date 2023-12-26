@@ -49,7 +49,7 @@ class Keywords(db.Model):
 def main_page():
     songs = db.session.execute(
         db.select(User.email, Music).where(User.id == Music.artistId).order_by(Music.views, Music.likes)
-    ).fetchmany(16)
+    ).fetchmany(50)
     return render_template("index.html", songs=songs)
 
 @app.route("/search", methods=["GET", "POST"])
@@ -81,6 +81,8 @@ def login():
     if request.method == "GET":
         return render_template("login.html", session=session)
     elif request.method == "POST":
+        if not request.form.get('email') or not request.form.get('password'):
+            return jsonify(error="Expected form with 'email' and 'password' entries"), 422
         pwd_hash = db.session.execute(
             db.select(User.passwordHash).where(User.id == HASH_STR_64(request.form['email']))
         ).scalar_one_or_none()
@@ -116,6 +118,8 @@ def register():
 
 @app.route("/playback")
 def playback():
+    song_id = request.args.get('watch')
+    print(song_id)
     return render_template("playback.html", thumbnail=None, audio=None)
 
 @app.route("/likes")
@@ -124,20 +128,38 @@ def likes():
 
 @app.route("/user", methods=['GET', 'POST'])
 def user():
-    userID = request.args.get('id')
+    userID = request.args.get('id') or request.args.get('name') or session.get('email')
     if not userID:
-        userID = session.get('email')
-        if not userID:
-            if request.method == 'GET':
-                return render_template("user.html", has_songs=True, artistName='')
-            else:
-                return jsonify(error="Must either be signed in or provide a query string!"), 403
+        if request.method == 'GET':
+            return render_template("user.html", has_songs=True, artistName='')
+        else:
+            return jsonify(error="Must either be signed in or provide a query string!"), 403
+        
+    for char in userID:
+        if char.isalpha():
+            userID = HASH_STR_64(userID)
+            break
+
+    if isinstance(userID, str):
+        userID = int(userID)
+
+    username = db.session.execute(db.select(User.email).where(User.id == userID)).scalar_one_or_none()
+    if username is None:
+        if request.method == 'GET':
+            return render_template("user.html", no_such_user=True)
+        return jsonify(error="No such user exists!"), 404
+
     songs = db.session.execute(
-        db.select(Music.id, Music.name, Music.link, Music.views, Music.likes).where(Music.artistId == HASH_STR_64(userID))
+        db.select(Music.id, Music.name, Music.link, Music.views, Music.likes).where(Music.artistId == userID)
     ).all()
+
     if request.method == 'GET':
-        return render_template("user.html", songs=songs, has_songs=len(songs)==0, artistName=userID.split('@')[0])
-    return {songs: songs}, 200
+        return render_template("user.html", songs=songs, has_no_songs=len(songs)==0, artistName=username.split('@')[0], 
+                               no_such_user=False)
+    songs_out = []
+    for i in songs:
+        songs_out.append({'id': i.id, 'name': i.name, 'link': i.link, 'views': i.views, 'likes': i.likes})
+    return jsonify(username=username, userID=userID, songs=songs_out), 200
 
 @app.route("/logout")
 def logout():
@@ -147,8 +169,10 @@ def logout():
 @app.route("/upload", methods=['GET', 'POST'])
 def upload_songs():
     if request.method == 'GET':
-        return render_template("upload-song.html")
+        return render_template("upload-song.html", session=session)
     elif request.method == 'POST':
+        if not session.get('email'):
+            return jsonify(error="Need to be signed in to upload!"), 401
         artistId = HASH_STR_64(session['email'])
         songName = request.form['name']
         id = HASH_STR_64(songName)

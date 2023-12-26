@@ -3,68 +3,72 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy import Integer, String, LargeBinary, BINARY
 import metrohash
-import toml
+from io import BytesIO
 
 NAME = "Soundache Song Database"
-SECRETS = toml.load('instance/secrets.toml')
 HASH_STR_64 = lambda s: metrohash.hash64_int(s, seed=0) // 2
 
 app = Flask(NAME)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///songs.db"
-app.secret_key = SECRETS['secret_key']   # secrets.token_hex()
 db = SQLAlchemy()
 db.init_app(app)
 
 class Song(db.Model):
     name: Mapped[str] = mapped_column(String, nullable=False)
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    artistID: Mapped[int] = mapped_column(Integer)
-    # artistName: Mapped[str] = mapped_column(String)
+    artistID: Mapped[int] = mapped_column(Integer, primary_key=True)
+    artistName: Mapped[str] = mapped_column(String)
+    thumbnailFileType: Mapped[str] = mapped_column(String, nullable=False)
+    songFileType: Mapped[str] = mapped_column(String, nullable=False)
     thumbnail: Mapped[bytes] = mapped_column(LargeBinary, nullable=True)
     songFile: Mapped[bytes] = mapped_column(LargeBinary)
-    # midi = mapped_column(LargeBinary)
     # lyrics = mapped_column(LargeBinary)
 
-@app.route("/")
+@app.route("/", methods=['GET', 'POST', 'OPTIONS', 'HEAD', 'PUT'])
 def index():
-    songID = request.query.get('id')
-    file = db.session.execute(db.select(Song.songFile, Song.thumbnail).where(Song.id==songID)).scalar_one_or_none()
-    if file is None:
-        return jsonify(error="Song not found!"), 404
-    return send_file(file), 200
+    return jsonify(
+        error="API endpoints available are '/upload', '/<songID:integer>/thumbnail' and '/<songID:integer>/music'"
+    ), 404
 
-@app.route("/upload", methods=['GET', 'POST', 'OPTIONS'])
+@app.route("/upload", methods=['GET', 'POST'])
 def upload():
     if request.method != 'POST':
         return {}, 200
+    
     try:
-        artistId = HASH_STR_64(request.form['email'])
+        artistName = request.form['email']
+        artistId = HASH_STR_64(artistName)
         songName = request.form['name']
         id = HASH_STR_64(songName)
-        song = Song(name=songName, id=id, artistId=artistId, thumbnail=request.form['thumbnail-file'], 
-                    songFile=request.form['song-file'])
+        thumbnailFileType = request.files['thumbnail-file'].filename.split('.')[-1]
+        songFileType = request.files['song-file'].filename.split('.')[-1]
+        thumbnail = request.files['thumbnail-file'].read()
+        songFile = request.files['song-file'].read()
     except KeyError:
-        return jsonify(error="Expected a form with 'email', 'name', 'thumbnail-file' and 'song-file' entries"), 403
-    # TODO: check if song of same name exists alr
+        return jsonify(error="Expected a form with 'email', 'name', 'thumbnail-file' and 'song-file' entries"), 422
+    
+    if db.session.execute(db.select(Song.id).where(Song.id == id and Song.artistID == artistId)).scalar_one_or_none():
+        return jsonify(error="Song of same name and from the same artist already exists!"), 409
+
+    song = Song(name=songName, id=id, artistID=artistId, thumbnail=thumbnail, artistName=artistName,
+                songFile=songFile, thumbnailFileType=thumbnailFileType, songFileType=songFileType)
     db.session.add(song)
     db.session.commit()
     return {}, 200
 
-@app.route("/thumbnail", methods=['GET'])
-def thumbnail():
-    songID = request.query.get('id')
-    file = db.session.execute(db.select(Song.thumbnail).where(Song.id==songID)).scalar_one_or_none()
-    if file is None:
+@app.route("/<songID>/thumbnail", methods=['GET'])
+def thumbnail(songID):
+    resource = db.session.execute(db.select(Song.thumbnailFileType, Song.thumbnail).where(Song.id==songID)).all()
+    if not resource:
         return jsonify(error="Song not found!"), 404
-    return send_file(file), 200
+    return send_file(BytesIO(resource[0].thumbnail), download_name=f"thumbnail.{resource[0].thumbnailFileType}"), 200
 
-@app.route("/music", methods=['GET'])
-def music():
-    songID = request.query.get('id')
-    file = db.session.execute(db.select(Song.songFile).where(Song.id==songID)).scalar_one_or_none()
-    if file is None:
+@app.route("/<songID>/music", methods=['GET'])
+def music(songID):
+    resource = db.session.execute(db.select(Song.songFileType, Song.songFile).where(Song.id==songID)).all()
+    if not resource:
         return jsonify(error="Song not found!"), 404
-    return send_file(file), 200
+    return send_file(BytesIO(resource[0].songFile), download_name=f"song.{resource[0].songFileType}"), 200
 
 @app.after_request
 def add_header(response):  # To avoid CORS exceptions in the frontend

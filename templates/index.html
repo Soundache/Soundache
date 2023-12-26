@@ -3,7 +3,8 @@
 {% block content %}
     <div id="song-grid">
     {% for artist, song in songs %}
-        <a class="songThumbnailGrid" href="{{song.link}}">
+        <a class="songThumbnailGrid" href="/playback?watch={{song.id}}">
+            <img src="{{song.link}}/thumbnail" class="thumbnail"/>
             <span class="songTitle">
                 {{ song.name }}
             </span>
