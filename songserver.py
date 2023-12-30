@@ -30,10 +30,24 @@ def index():
         error="API endpoints available are '/upload', '/<songID:integer>/thumbnail' and '/<songID:integer>/music'"
     ), 404
 
+@app.route("/<songID>/thumbnail", methods=['GET'])
+def thumbnail(songID):
+    resource = db.session.execute(db.select(Song.thumbnailFileType, Song.thumbnail).where(Song.id==songID)).all()
+    if not resource:
+        return jsonify(error="Song not found!"), 404
+    return send_file(BytesIO(resource[0].thumbnail), download_name=f"thumbnail.{resource[0].thumbnailFileType}"), 200
+
+@app.route("/<songID>/music", methods=['GET'])
+def music(songID):
+    resource = db.session.execute(db.select(Song.songFileType, Song.songFile).where(Song.id==songID)).all()
+    if not resource:
+        return jsonify(error="Song not found!"), 404
+    return send_file(BytesIO(resource[0].songFile), download_name=f"song.{resource[0].songFileType}"), 200
+
 @app.route("/upload", methods=['GET', 'POST'])
 def upload():
     if request.method != 'POST':
-        return {}, 200
+        return jsonify(), 200
     
     try:
         artistName = request.form['email']
@@ -55,20 +69,6 @@ def upload():
     db.session.add(song)
     db.session.commit()
     return {}, 200
-
-@app.route("/<songID>/thumbnail", methods=['GET'])
-def thumbnail(songID):
-    resource = db.session.execute(db.select(Song.thumbnailFileType, Song.thumbnail).where(Song.id==songID)).all()
-    if not resource:
-        return jsonify(error="Song not found!"), 404
-    return send_file(BytesIO(resource[0].thumbnail), download_name=f"thumbnail.{resource[0].thumbnailFileType}"), 200
-
-@app.route("/<songID>/music", methods=['GET'])
-def music(songID):
-    resource = db.session.execute(db.select(Song.songFileType, Song.songFile).where(Song.id==songID)).all()
-    if not resource:
-        return jsonify(error="Song not found!"), 404
-    return send_file(BytesIO(resource[0].songFile), download_name=f"song.{resource[0].songFileType}"), 200
 
 @app.after_request
 def add_header(response):  # To avoid CORS exceptions in the frontend

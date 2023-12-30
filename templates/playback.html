@@ -1,8 +1,18 @@
 {% extends "base.html" %}
 {% block title %}Play{% endblock %}
 {% block content %}
-    <img src="static/logo.png" alt="thumbnail" id="#thumbnail">
-    <audio controls>
-        <source src="audio.mp3" type="audio/mpeg">
-    </audio>
+    {% if error %}
+        No such song exists!
+    {% else %}
+        <div id="player">
+            <img src="{{fmt(song[0].link)}}/thumbnail" class="thumbnail" alt=""/>
+            <span id="title">{{song[0].name}}</span>
+            <audio controls id="audio-control">
+                <source src="{{fmt(song[0].link)}}/music" type="audio/mpeg">
+            </audio>
+            <span id="views">{{song[0].views}} views</span>
+            <button id="like">&#128151;</button>
+            <button id="dislike">&#128078;</button>
+        </div>
+    {% endif %}
 {% endblock %} 

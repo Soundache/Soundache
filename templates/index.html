@@ -4,7 +4,7 @@
     <div id="song-grid">
     {% for artist, song in songs %}
         <a class="songThumbnailGrid" href="/playback?watch={{song.id}}">
-            <img src="{{song.link}}/thumbnail" class="thumbnail"/>
+            <img src="{{fmt(song.link)}}/thumbnail" class="thumbnail" alt=""/>
             <span class="songTitle">
                 {{ song.name }}
             </span>
@@ -12,10 +12,13 @@
                 {{ artist.split('@')[0] }}
             </span>
             <span class="views">
-                {{ song.views }} &#x1F441
+                {{ song.views }} &#x1F441;
             </span>
             <span class="likes">
-                {{ song.likes }} &#128151
+                {{ song.likes }} &#128151;
+            </span>
+            <span class="dislikes">
+                {{ song.dislikes }} &#128078;
             </span>
         </a>
     {% endfor %}

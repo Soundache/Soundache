@@ -4,9 +4,10 @@
         <meta charset="UTF-8"/>
         <meta name="viewport" content="width=device-width">
         <title>{% block title required%}{% endblock %} - Soundache</title>
+        <link rel="icon" type="image/x-icon" href="static/favicon.ico">
         <link rel=stylesheet href="static/style.css"/>
         <script>
-            const DEPLOYED = false;   // TODO: CHANGE BEFORE DEPLOYING
+            const DEPLOYED = true;   // TODO: CHANGE BEFORE DEPLOYING
             let SOUNDACHE_SONGSERVER;
             const SERVER = window.location.protocol + '//' + window.location.hostname;
             if (DEPLOYED)
@@ -74,7 +75,7 @@
             </span>
             {% if session.get('email') %}
                 <button onclick="toggleHide('account-options')" id="account-options-btn" class="darkbg">
-                    {{ session['email'].split('@')[0] }}
+                    {{ session['email'].split('@')[0] }} &#128315;
                 </button>
             {% else %}
                 <span class="darkbg" id="user">

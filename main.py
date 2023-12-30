@@ -1,10 +1,11 @@
-from flask import Flask, render_template, request, abort, jsonify, session, make_response, redirect
+from flask import Flask, render_template, request, abort, jsonify, session, url_for, redirect
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from flask_mail import Mail
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, backref
 from typing import Set, List
-from sqlalchemy import Integer, String, LargeBinary, BINARY, JSON, ForeignKey
+from sqlalchemy import Integer, String, JSON, ForeignKey, PickleType
+from sqlalchemy.ext.mutable import MutableList, MutableSet
 import difflib
 import metrohash
 import secrets
@@ -26,9 +27,8 @@ class User(db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     email: Mapped[str] = mapped_column(String, nullable=False)
     passwordHash: Mapped[str] = mapped_column(String, nullable=False)
-    # likes: Mapped[List["Music"]] = mapped_column(Integer)
-    # channel: Mapped[List["Music"]] = mapped_column(Integer)
-    # channel = relationship()
+    likes: Mapped[list] = mapped_column(MutableList.as_mutable(PickleType), default=[])
+    dislikes: Mapped[list] = mapped_column(MutableList.as_mutable(PickleType), default=[])
 
 class Music(db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -37,20 +37,24 @@ class Music(db.Model):
     link: Mapped[str] = mapped_column(String, nullable=False)
     views: Mapped[int] = mapped_column(Integer, default=0)
     likes: Mapped[int] = mapped_column(Integer, default=0)
-    # dislikes: Mapped[int] = mapped_column(Integer, default=0)
-    # thumnail: Mapped[bytes] = mapped_column(BINARY)
+    dislikes: Mapped[int] = mapped_column(Integer, default=0)
     derivativeOf: Mapped[str] = mapped_column(String, nullable=True)
 
 class Keywords(db.Model):
     keyword: Mapped[str] = mapped_column(String, primary_key=True)
-    # songs: Mapped[Set[Music]] = mapped_column(Set, nullable=False)
+    songs: Mapped[set] = mapped_column(MutableSet.as_mutable(PickleType), default=[])
+
+def fmt_link(string: str) -> str:
+    if string.startswith(':8000'):
+        string = url_for('main_page', _external=True).rstrip(':5000/') + string  # TODO: change before deploying
+    return string
 
 @app.route("/")
 def main_page():
     songs = db.session.execute(
         db.select(User.email, Music).where(User.id == Music.artistId).order_by(Music.views, Music.likes)
-    ).fetchmany(50)
-    return render_template("index.html", songs=songs)
+    ).fetchmany(16)
+    return render_template("index.html", songs=songs, fmt=fmt_link)
 
 @app.route("/search", methods=["GET", "POST"])
 def search():
@@ -119,19 +123,32 @@ def register():
 @app.route("/playback")
 def playback():
     song_id = request.args.get('watch')
-    print(song_id)
-    return render_template("playback.html", thumbnail=None, audio=None)
+    song = db.session.execute(db.select(Music).where(Music.id == song_id)).fetchone()
+    song_is_None = song is None
+    return render_template("playback.html", song=song, fmt=fmt_link, error=song_is_None), 404 if song_is_None else 200
 
-@app.route("/likes")
-def likes():
-    pass
+@app.route("/likes", methods=['GET', 'POST'])
+def likes():  # TODO: complete
+    if not session.get('email'):
+        return jsonify(error="Must be logged in to use this endpoint!"), 401
+    liked_songs = db.session.execute(
+        db.select(User.likes).where(User.id == HASH_STR_64(session['email']))
+    ).all()
+    # for song in liked_songs:
+    #     db.session.execute(db.select(User.artistName, Music).where(User.id == Music.artistId))
+    if request.method == 'GET':
+        return render_template("likes.html", songs=liked_songs, fmt=fmt_link)
+    songs_out = []
+    for i in liked_songs:
+        songs_out.append({'id': i.id, 'name': i.name, 'link': i.link})
+    return jsonify(liked_songs=songs_out), 200
 
 @app.route("/user", methods=['GET', 'POST'])
 def user():
     userID = request.args.get('id') or request.args.get('name') or session.get('email')
     if not userID:
         if request.method == 'GET':
-            return render_template("user.html", has_songs=True, artistName='')
+            return render_template("user.html", has_songs=True, artistName='', fmt=fmt_link)
         else:
             return jsonify(error="Must either be signed in or provide a query string!"), 403
         
@@ -150,12 +167,13 @@ def user():
         return jsonify(error="No such user exists!"), 404
 
     songs = db.session.execute(
-        db.select(Music.id, Music.name, Music.link, Music.views, Music.likes).where(Music.artistId == userID)
-    ).all()
+        db.select(Music.id, Music.name, Music.link, Music.views, Music.likes, Music.dislikes)\
+            .where(Music.artistId == userID)
+        ).all()
 
     if request.method == 'GET':
         return render_template("user.html", songs=songs, has_no_songs=len(songs)==0, artistName=username.split('@')[0], 
-                               no_such_user=False)
+                               no_such_user=False, fmt=fmt_link)
     songs_out = []
     for i in songs:
         songs_out.append({'id': i.id, 'name': i.name, 'link': i.link, 'views': i.views, 'likes': i.likes})
