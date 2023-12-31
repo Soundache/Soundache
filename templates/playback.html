@@ -8,13 +8,13 @@
             <img src="{{fmt(song[1].link)}}/thumbnail" class="thumbnail" alt=""/>
             <span id="title">{{song[1].name}}</span>
             <span id="artistName">{{song[0].split('@')[0]}}</span>
+            <span id="derivative-of">
+                Original at <a href="{{song[1].derivativeOf}}">{{song[1].derivativeOf}}</a>
+            </span>
             <span id="views">{{song[1].views}} views</span>
-            <audio controls id="audio-control">
-                <source src="{{fmt(song[1].link)}}/music" type="audio/mpeg">
-            </audio>
             {% if session.get('email') %}
-                <button id="like" onclick="like()">&#128151;</button>
-                <button id="dislike" onclick="dislike()">&#128078;</button>
+                <button id="like"    onclick="like()"   >{{song[1].likes}}    &#128151;</button>
+                <button id="dislike" onclick="dislike()">{{song[1].dislikes}} &#128078;</button>
                 <script>
                     const like_btn = document.getElementById('like');
                     const dislike_btn = document.getElementById('dislike');
@@ -30,7 +30,13 @@
                         dislike_btn.setAttribute('disabled', true);
                     }
                 </script>
+            {% else %}
+                <span id="like"   >{{song[1].likes}}    &#128151;</span>
+                <span id="dislike">{{song[1].dislikes}} &#128078;</span>
             {% endif %}
+            <audio controls id="audio-control">
+                <source src="{{fmt(song[1].link)}}/music" type="audio/mpeg">
+            </audio>
         </div>
     {% endif %}
 {% endblock %} 

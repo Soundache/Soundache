@@ -22,12 +22,12 @@ class Song(db.Model):
     songFileType: Mapped[str] = mapped_column(String, nullable=False)
     thumbnail: Mapped[bytes] = mapped_column(LargeBinary, nullable=True)
     songFile: Mapped[bytes] = mapped_column(LargeBinary)
-    # lyrics = mapped_column(LargeBinary)
 
 @app.route("/", methods=['GET', 'POST', 'OPTIONS', 'HEAD', 'PUT'])
 def index():
     return jsonify(
-        error="API endpoints available are '/upload', '/<songID:integer>/thumbnail' and '/<songID:integer>/music'"
+        error="API endpoints available are '/upload', '/<artistID:integer>.<songID:integer>/thumbnail' "
+              "and '/<artistID:integer>.<songID:integer>/music'"
     ), 404
 
 @app.route("/<songID>/thumbnail", methods=['GET'])

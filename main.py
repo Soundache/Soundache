@@ -48,7 +48,7 @@ def fmt_link(string: str) -> str:
         # TODO: change before deploying
         # string = url_for('main_page', _external=True).rstrip('/') + string
         # string = url_for('main_page', _external=True).rstrip(':5000/') + string
-        string = "https://glowing-adventure-jj54pj9wvvp92p7wp-8000.app.github.dev/" + string.lstrip(':8000/')
+        string = "https://laughing-space-disco-979qg7w4rrx437w4r-8000.app.github.dev/" + string.lstrip(':8000/')
     return string
 
 @app.route("/")
@@ -124,12 +124,12 @@ def register():
 
 @app.route("/playback")
 def playback():
-    action = request.args.get('action')
     try:
         artist_id, song_id = request.args.get('watch').split('.')
     except:
         return jsonify(error="Malformed or non-existent (required) query 'watch'"), 400
     
+    action = request.args.get('action')
     if action and session.get('email'):
         userID = HASH_STR_64(session.get('email'))
         song = db.session.execute(db.select(Music).where(Music.id == song_id and Music.artistId == artist_id)).fetchone()[0]
@@ -139,6 +139,7 @@ def playback():
                 return jsonify(error="Can't like a song twice"), 409
             try:
                 user.dislikes.remove((artist_id, song_id))  # Can't like and dislike song simultaneously
+                song.dislikes -= 1
             except:
                 pass
             song.likes += 1
@@ -148,15 +149,21 @@ def playback():
                 return jsonify(error="Can't unlike a song twice"), 409
             try:
                 user.likes.remove((artist_id, song_id))   # Can't like and dislike song simultaneously
+                song.likes -= 1
             except:
                 pass
             song.dislikes += 1
             user.dislikes.append((artist_id, song_id))
+        else:
+            return jsonify(error="'action' query can only have 'like' or 'dislike' as values"), 400
         db.session.commit()
         return jsonify(), 200
     
     song = db.session.execute(db.select(User.email, Music)\
                               .where(Music.id == song_id and Music.artistId == User.id)).fetchone()
+    if session.get('email'):
+        song[1].views += 1
+        db.session.commit()
     song_is_None = song is None
     return render_template("playback.html", song=song, fmt=fmt_link, error=song_is_None, session=session), \
          404 if song_is_None else 200
@@ -165,18 +172,19 @@ def playback():
 def likes():
     if not session.get('email'):
         return jsonify(error="Must be logged in to use this endpoint!"), 401
-    liked_songs = list(db.session.execute(
+    liked_songs = db.session.execute(
         db.select(User.likes).where(User.id == HASH_STR_64(session['email']))
-    ).all())
-    disliked_songs = list(db.session.execute(
+    ).fetchone()[0]
+    disliked_songs = db.session.execute(
         db.select(User.dislikes).where(User.id == HASH_STR_64(session['email']))
-    ).all())
+    ).fetchone()[0]
+    print(liked_songs)
 
-    for index, artist_id, song_id in enumerate(liked_songs):
+    for index, (artist_id, song_id) in enumerate(liked_songs):
         liked_songs[index] = db.session.execute(
             db.select(Music).where(Music.id == song_id and Music.artistId == artist_id)
         ).fetchone()[0]
-    for index, artist_id, song_id in enumerate(disliked_songs):
+    for index, (artist_id, song_id) in enumerate(disliked_songs):
         disliked_songs[index] = db.session.execute(
             db.select(Music).where(Music.id == song_id and Music.artistId == artist_id)
         ).fetchone()[0]

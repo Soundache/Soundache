@@ -150,9 +150,11 @@ a {
     width: 90%;
     grid-template-areas:'thumbnail      thumbnail'
                         'title          title'
-                        'artistName     views'
-                        'audio-control  audio-control'
-                        'like           dislike';
+                        'artistName     artistName'
+                        'derivative-of  derivative-of'
+                        'views          views'
+                        'like           dislike'
+                        'audio-control  audio-control';
 }
 #thumbnail {
     grid-area: thumbnail;
@@ -169,13 +171,18 @@ a {
     grid-area: artistName;
     font-size: large;
 }
-#audio-control {
-    grid-area: audio-control;
-}
 #views {
     grid-area: views;
     font-size: medium;
     text-align: right;
+}
+#derivative-of {
+    grid-area: derivative-of;
+    font-size: medium;
+    font-style: italic;
+}
+#audio-control {
+    grid-area: audio-control;
 }
 #like {
     grid-area: like;
