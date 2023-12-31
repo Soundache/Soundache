@@ -10,9 +10,9 @@
         <b class="red"><i>{{ artistName }}</i></b> has no songs, unfortunately.
     {% else %}
         <h1>{{ artistName }}</h1>
-        <div id="song-grid">
+        <div class="song-grid">
             {% for song in songs %}
-                <a class="songThumbnailGrid" href="/playback?watch={{song.id}}">
+                <a class="songThumbnailGrid" href="/playback?watch={{song.artistId}}.{{song.id}}">
                     <img src="{{fmt(song.link)}}/thumbnail" class="thumbnail" alt=""/>
                     <span class="songTitle">
                         {{ song.name }}

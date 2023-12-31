@@ -1,26 +1,44 @@
 {% extends "base.html" %}
 {% block title %}Liked Songs{%endblock%}
 {% block content %}
-    <div id="song-grid">
-    {% for artist, song in songs %}
-        <a class="songThumbnailGrid" href="/playback?watch={{song.id}}">
-            <img src="{{fmt(song.link)}}/thumbnail" class="thumbnail" alt=""/>
-            <span class="songTitle">
-                {{ song.name }}
-            </span>
-            <span class="artistName">
-                {{ artist.split('@')[0] }}
-            </span>
-            <span class="views">
-                {{ song.views }} &#x1F441;
-            </span>
-            <span class="likes">
-                {{ song.likes }} &#128151;
-            </span>
-            <span class="dislikes">
-                {{ song.dislikes }} &#128078;
-            </span>
-        </a>
-    {% endfor %}
+    <h1>Liked Songs</h1>
+    <div class="song-grid">
+        {% for song in liked_songs %}
+            <a class="songThumbnailGrid" href="/playback?watch={{song.artistId}}.{{song.id}}">
+                <img src="{{fmt(song.link)}}/thumbnail" class="thumbnail" alt=""/>
+                <span class="songTitle">
+                    {{ song.name }}
+                </span>
+                <span class="views">
+                    {{ song.views }} &#x1F441;
+                </span>
+                <span class="likes">
+                    {{ song.likes }} &#128151;
+                </span>
+                <span class="dislikes">
+                    {{ song.dislikes }} &#128078;
+                </span>
+            </a>
+        {% endfor %}
+    </div>
+    <h1>Disliked Songs</h1>
+    <div class="song-grid">
+        {% for song in disliked_songs %}
+            <a class="songThumbnailGrid" href="/playback?watch={{song.artistId}}.{{song.id}}">
+                <img src="{{fmt(song.link)}}/thumbnail" class="thumbnail" alt=""/>
+                <span class="songTitle">
+                    {{ song.name }}
+                </span>
+                <span class="views">
+                    {{ song.views }} &#x1F441;
+                </span>
+                <span class="likes">
+                    {{ song.likes }} &#128151;
+                </span>
+                <span class="dislikes">
+                    {{ song.dislikes }} &#128078;
+                </span>
+            </a>
+        {% endfor %}
     </div>
 {% endblock %}

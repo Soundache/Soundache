@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request, abort, jsonify, session, url_for, redirect
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_sqlalchemy import SQLAlchemy
-from flask_mail import Mail
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, backref
 from typing import Set, List
 from sqlalchemy import Integer, String, JSON, ForeignKey, PickleType
@@ -42,11 +41,14 @@ class Music(db.Model):
 
 class Keywords(db.Model):
     keyword: Mapped[str] = mapped_column(String, primary_key=True)
-    songs: Mapped[set] = mapped_column(MutableSet.as_mutable(PickleType), default=[])
+    songs: Mapped[set] = mapped_column(MutableSet.as_mutable(PickleType), default=set())
 
 def fmt_link(string: str) -> str:
     if string.startswith(':8000'):
-        string = url_for('main_page', _external=True).rstrip(':5000/') + string  # TODO: change before deploying
+        # TODO: change before deploying
+        # string = url_for('main_page', _external=True).rstrip('/') + string
+        # string = url_for('main_page', _external=True).rstrip(':5000/') + string
+        string = "https://glowing-adventure-jj54pj9wvvp92p7wp-8000.app.github.dev/" + string.lstrip(':8000/')
     return string
 
 @app.route("/")
@@ -122,26 +124,73 @@ def register():
 
 @app.route("/playback")
 def playback():
-    song_id = request.args.get('watch')
-    song = db.session.execute(db.select(Music).where(Music.id == song_id)).fetchone()
+    action = request.args.get('action')
+    try:
+        artist_id, song_id = request.args.get('watch').split('.')
+    except:
+        return jsonify(error="Malformed or non-existent (required) query 'watch'"), 400
+    
+    if action and session.get('email'):
+        userID = HASH_STR_64(session.get('email'))
+        song = db.session.execute(db.select(Music).where(Music.id == song_id and Music.artistId == artist_id)).fetchone()[0]
+        user = db.session.execute(db.select(User).where(User.id == userID)).fetchone()[0]
+        if action == 'like':
+            if (artist_id, song_id) in user.likes:
+                return jsonify(error="Can't like a song twice"), 409
+            try:
+                user.dislikes.remove((artist_id, song_id))  # Can't like and dislike song simultaneously
+            except:
+                pass
+            song.likes += 1
+            user.likes.append((artist_id, song_id))
+        elif action == 'dislike':
+            if (artist_id, song_id) in user.dislikes:
+                return jsonify(error="Can't unlike a song twice"), 409
+            try:
+                user.likes.remove((artist_id, song_id))   # Can't like and dislike song simultaneously
+            except:
+                pass
+            song.dislikes += 1
+            user.dislikes.append((artist_id, song_id))
+        db.session.commit()
+        return jsonify(), 200
+    
+    song = db.session.execute(db.select(User.email, Music)\
+                              .where(Music.id == song_id and Music.artistId == User.id)).fetchone()
     song_is_None = song is None
-    return render_template("playback.html", song=song, fmt=fmt_link, error=song_is_None), 404 if song_is_None else 200
+    return render_template("playback.html", song=song, fmt=fmt_link, error=song_is_None, session=session), \
+         404 if song_is_None else 200
 
 @app.route("/likes", methods=['GET', 'POST'])
-def likes():  # TODO: complete
+def likes():
     if not session.get('email'):
         return jsonify(error="Must be logged in to use this endpoint!"), 401
-    liked_songs = db.session.execute(
+    liked_songs = list(db.session.execute(
         db.select(User.likes).where(User.id == HASH_STR_64(session['email']))
-    ).all()
-    # for song in liked_songs:
-    #     db.session.execute(db.select(User.artistName, Music).where(User.id == Music.artistId))
+    ).all())
+    disliked_songs = list(db.session.execute(
+        db.select(User.dislikes).where(User.id == HASH_STR_64(session['email']))
+    ).all())
+
+    for index, artist_id, song_id in enumerate(liked_songs):
+        liked_songs[index] = db.session.execute(
+            db.select(Music).where(Music.id == song_id and Music.artistId == artist_id)
+        ).fetchone()[0]
+    for index, artist_id, song_id in enumerate(disliked_songs):
+        disliked_songs[index] = db.session.execute(
+            db.select(Music).where(Music.id == song_id and Music.artistId == artist_id)
+        ).fetchone()[0]
+
     if request.method == 'GET':
-        return render_template("likes.html", songs=liked_songs, fmt=fmt_link)
-    songs_out = []
+        return render_template("likes.html", liked_songs=liked_songs, disliked_songs=disliked_songs, fmt=fmt_link)
+    
+    liked_songs_out = []
+    disliked_songs_out = []
     for i in liked_songs:
-        songs_out.append({'id': i.id, 'name': i.name, 'link': i.link})
-    return jsonify(liked_songs=songs_out), 200
+        liked_songs_out.append({'id': i.id, 'name': i.name, 'link': i.link})
+    for i in disliked_songs:
+        disliked_songs_out.append({'id': i.id, 'name': i.name, 'link': i.link})
+    return jsonify(liked_songs=liked_songs_out, disliked_songs=disliked_songs_out), 200
 
 @app.route("/user", methods=['GET', 'POST'])
 def user():
@@ -197,7 +246,7 @@ def upload_songs():
         derivativeOf = request.form['derivativeOf']
         url = request.form['urlToWork'].removesuffix('/')
         if request.form['hostIsSoundache'] == 'true':
-            url = ':8000/' + str(id)
+            url = ':8000/' + str(artistId) + '.' + str(id)
         song_exists = db.session.execute(
             db.select(Music.id).where(Music.id == id and Music.artistId == artistId)
         ).scalar_one_or_none()

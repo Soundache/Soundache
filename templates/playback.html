@@ -5,14 +5,32 @@
         No such song exists!
     {% else %}
         <div id="player">
-            <img src="{{fmt(song[0].link)}}/thumbnail" class="thumbnail" alt=""/>
-            <span id="title">{{song[0].name}}</span>
+            <img src="{{fmt(song[1].link)}}/thumbnail" class="thumbnail" alt=""/>
+            <span id="title">{{song[1].name}}</span>
+            <span id="artistName">{{song[0].split('@')[0]}}</span>
+            <span id="views">{{song[1].views}} views</span>
             <audio controls id="audio-control">
-                <source src="{{fmt(song[0].link)}}/music" type="audio/mpeg">
+                <source src="{{fmt(song[1].link)}}/music" type="audio/mpeg">
             </audio>
-            <span id="views">{{song[0].views}} views</span>
-            <button id="like">&#128151;</button>
-            <button id="dislike">&#128078;</button>
+            {% if session.get('email') %}
+                <button id="like" onclick="like()">&#128151;</button>
+                <button id="dislike" onclick="dislike()">&#128078;</button>
+                <script>
+                    const like_btn = document.getElementById('like');
+                    const dislike_btn = document.getElementById('dislike');
+                    const action_link = "/playback?watch={{song[1].artistId}}.{{song[1].id}}&action=";
+                    
+                    function like() {
+                        fetch(action_link + 'like');
+                        like_btn.setAttribute('disabled', true);
+                    }
+
+                    function dislike() {
+                        fetch(action_link + 'dislike');
+                        dislike_btn.setAttribute('disabled', true);
+                    }
+                </script>
+            {% endif %}
         </div>
     {% endif %}
 {% endblock %} 
