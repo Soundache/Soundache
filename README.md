@@ -11,9 +11,6 @@ pip install -r requirements.txt
 ```
 
 # TODOS
-1. ~~Finish playback.html~~ + styling
-2. ~~BUG: song.link is not interpreted correctly~~
-3. Finish likes page
-4. Put some songs in the database
-5. Finish search engine
-6. API documentation/demo + README.md
+1. Put some songs in the database
+2. Finish search engine
+3. API documentation/demo + README.md
