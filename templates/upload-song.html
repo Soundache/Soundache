@@ -102,7 +102,7 @@
                     copyFormData.delete('derivativeOf');
                     copyFormData.delete('hostIsSoundache');
                     copyFormData.delete('urlToWork');
-                    fetch(SOUNDACHE_SONGSERVER+'/upload', {
+                    fetch('/songserver/upload', {
                             method: 'POST',
                             body: copyFormData
                         });

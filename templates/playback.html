@@ -5,7 +5,7 @@
         No such song exists!
     {% else %}
         <div id="player">
-            <img src="{{fmt(song[1].link)}}/thumbnail" class="thumbnail" alt=""/>
+            <img src="{{song[1].link}}/thumbnail" class="thumbnail" alt=""/>
             <span id="title">{{song[1].name}}</span>
             <span id="artistName">{{song[0].split('@')[0]}}</span>
             <span id="derivative-of">
@@ -21,21 +21,31 @@
                     const action_link = "/playback?watch={{song[1].artistId}}.{{song[1].id}}&action=";
                     
                     function like() {
-                        fetch(action_link + 'like');
+                        fetch(action_link + 'like').then(updateLikeCounts);
                         like_btn.setAttribute('disabled', true);
+                        dislike_btn.removeAttribute('disabled');
                     }
 
                     function dislike() {
-                        fetch(action_link + 'dislike');
+                        fetch(action_link + 'dislike').then(updateLikeCounts);
                         dislike_btn.setAttribute('disabled', true);
+                        like_btn.removeAttribute('disabled');
+                    }
+
+                    async function updateLikeCounts(response) {
+                        if (response.status == 200) {
+                            let json = await response.json();
+                            like_btn.innerText    =    `${json.likes} \u{1f497}`;
+                            dislike_btn.innerText = `${json.dislikes} \u{1f44e}`;
+                        }
                     }
                 </script>
             {% else %}
                 <span id="like"   >{{song[1].likes}}    &#128151;</span>
                 <span id="dislike">{{song[1].dislikes}} &#128078;</span>
             {% endif %}
-            <audio controls id="audio-control">
-                <source src="{{fmt(song[1].link)}}/music" type="audio/mpeg">
+            <audio controls autoplay id="audio-control">
+                <source src="{{song[1].link}}/music">
             </audio>
         </div>
     {% endif %}

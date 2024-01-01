@@ -1,13 +1,10 @@
-from flask import Flask, render_template, request, abort, jsonify, session, url_for, redirect
+from flask import Flask, render_template, request, jsonify, session, redirect
 from werkzeug.security import check_password_hash, generate_password_hash
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, backref
-from typing import Set, List
-from sqlalchemy import Integer, String, JSON, ForeignKey, PickleType
+from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Integer, String, ForeignKey, PickleType
 from sqlalchemy.ext.mutable import MutableList, MutableSet
+from declarations import db, HASH_STR_64
 import difflib
-import metrohash
-import secrets
 import toml
 
 SOUNDACHE = "Soundache"
@@ -15,11 +12,14 @@ SECRETS = toml.load('instance/secrets.toml')
 
 app = Flask(SOUNDACHE)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
+app.config["SQLALCHEMY_BINDS"] = {
+    'songserver_db': "sqlite:///songs.db"
+}
 app.secret_key = SECRETS['secret_key']   # secrets.token_hex()
-db = SQLAlchemy()
 db.init_app(app)
 
-HASH_STR_64 = lambda s: metrohash.hash64_int(s, seed=0) // 2
+from songserver import app as songserver
+app.register_blueprint(songserver, url_prefix='/songserver')
 
 class User(db.Model):
     __tablename__ = "user"
@@ -43,20 +43,12 @@ class Keywords(db.Model):
     keyword: Mapped[str] = mapped_column(String, primary_key=True)
     songs: Mapped[set] = mapped_column(MutableSet.as_mutable(PickleType), default=set())
 
-def fmt_link(string: str) -> str:
-    if string.startswith(':8000'):
-        # TODO: change before deploying
-        # string = url_for('main_page', _external=True).rstrip('/') + string
-        # string = url_for('main_page', _external=True).rstrip(':5000/') + string
-        string = "https://laughing-space-disco-979qg7w4rrx437w4r-8000.app.github.dev/" + string.lstrip(':8000/')
-    return string
-
 @app.route("/")
 def main_page():
     songs = db.session.execute(
         db.select(User.email, Music).where(User.id == Music.artistId).order_by(Music.views, Music.likes)
     ).fetchmany(16)
-    return render_template("index.html", songs=songs, fmt=fmt_link)
+    return render_template("index.html", songs=songs)
 
 @app.route("/search", methods=["GET", "POST"])
 def search():
@@ -157,15 +149,17 @@ def playback():
         else:
             return jsonify(error="'action' query can only have 'like' or 'dislike' as values"), 400
         db.session.commit()
-        return jsonify(), 200
+        return jsonify(likes=song.likes, dislikes=song.dislikes), 200
     
     song = db.session.execute(db.select(User.email, Music)\
                               .where(Music.id == song_id and Music.artistId == User.id)).fetchone()
+    if not song:
+        return jsonify(error="No such song!"), 404
     if session.get('email'):
         song[1].views += 1
         db.session.commit()
     song_is_None = song is None
-    return render_template("playback.html", song=song, fmt=fmt_link, error=song_is_None, session=session), \
+    return render_template("playback.html", song=song, error=song_is_None, session=session), \
          404 if song_is_None else 200
 
 @app.route("/likes", methods=['GET', 'POST'])
@@ -190,7 +184,7 @@ def likes():
         ).fetchone()[0]
 
     if request.method == 'GET':
-        return render_template("likes.html", liked_songs=liked_songs, disliked_songs=disliked_songs, fmt=fmt_link)
+        return render_template("likes.html", liked_songs=liked_songs, disliked_songs=disliked_songs)
     
     liked_songs_out = []
     disliked_songs_out = []
@@ -205,7 +199,7 @@ def user():
     userID = request.args.get('id') or request.args.get('name') or session.get('email')
     if not userID:
         if request.method == 'GET':
-            return render_template("user.html", has_songs=True, artistName='', fmt=fmt_link)
+            return render_template("user.html", has_songs=True, artistName='')
         else:
             return jsonify(error="Must either be signed in or provide a query string!"), 403
         
@@ -230,7 +224,7 @@ def user():
 
     if request.method == 'GET':
         return render_template("user.html", songs=songs, has_no_songs=len(songs)==0, artistName=username.split('@')[0], 
-                               no_such_user=False, fmt=fmt_link)
+                               no_such_user=False)
     songs_out = []
     for i in songs:
         songs_out.append({'id': i.id, 'name': i.name, 'link': i.link, 'views': i.views, 'likes': i.likes})
@@ -254,7 +248,7 @@ def upload_songs():
         derivativeOf = request.form['derivativeOf']
         url = request.form['urlToWork'].removesuffix('/')
         if request.form['hostIsSoundache'] == 'true':
-            url = ':8000/' + str(artistId) + '.' + str(id)
+            url = '/songserver/' + str(artistId) + '.' + str(id)
         song_exists = db.session.execute(
             db.select(Music.id).where(Music.id == id and Music.artistId == artistId)
         ).scalar_one_or_none()

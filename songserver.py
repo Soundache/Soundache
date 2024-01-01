@@ -1,19 +1,14 @@
-from flask import Flask, request, make_response, jsonify, send_file
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import Integer, String, LargeBinary, BINARY
-import metrohash
+from flask import request, jsonify, send_file, Blueprint
+from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Integer, String, LargeBinary
+from declarations import db, HASH_STR_64
 from io import BytesIO
 
 NAME = "Soundache Song Database"
-HASH_STR_64 = lambda s: metrohash.hash64_int(s, seed=0) // 2
-
-app = Flask(NAME)
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///songs.db"
-db = SQLAlchemy()
-db.init_app(app)
+app = Blueprint(NAME, __name__)
 
 class Song(db.Model):
+    __bind_key__ = 'songserver_db'
     name: Mapped[str] = mapped_column(String, nullable=False)
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     artistID: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -78,9 +73,3 @@ def upload():
 def add_header(response):  # To avoid CORS exceptions in the frontend
     response.headers['Access-Control-Allow-Origin'] = '*'
     return response
-
-with app.app_context():
-    db.create_all()
-
-if __name__ == "__main__":
-    app.run(debug=True, port=8000)

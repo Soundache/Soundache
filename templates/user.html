@@ -13,7 +13,7 @@
         <div class="song-grid">
             {% for song in songs %}
                 <a class="songThumbnailGrid" href="/playback?watch={{song.artistId}}.{{song.id}}">
-                    <img src="{{fmt(song.link)}}/thumbnail" class="thumbnail" alt=""/>
+                    <img src="{{song.link}}/thumbnail" class="thumbnail" alt=""/>
                     <span class="songTitle">
                         {{ song.name }}
                     </span>

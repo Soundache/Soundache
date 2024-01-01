@@ -5,7 +5,7 @@
     <div class="song-grid">
         {% for song in liked_songs %}
             <a class="songThumbnailGrid" href="/playback?watch={{song.artistId}}.{{song.id}}">
-                <img src="{{fmt(song.link)}}/thumbnail" class="thumbnail" alt=""/>
+                <img src="{{song.link}}/thumbnail" class="thumbnail" alt=""/>
                 <span class="songTitle">
                     {{ song.name }}
                 </span>
@@ -25,7 +25,7 @@
     <div class="song-grid">
         {% for song in disliked_songs %}
             <a class="songThumbnailGrid" href="/playback?watch={{song.artistId}}.{{song.id}}">
-                <img src="{{fmt(song.link)}}/thumbnail" class="thumbnail" alt=""/>
+                <img src="{{song.link}}/thumbnail" class="thumbnail" alt=""/>
                 <span class="songTitle">
                     {{ song.name }}
                 </span>
