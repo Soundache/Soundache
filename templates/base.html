@@ -20,7 +20,7 @@
                 if (!search_query) {
                     return;
                 }
-                const request = await fetch("/search?searchbar=" + search_query.replace(" ", "+"), {
+                const request = await fetch("/search?searchbar=" + search_query, {
                     "method": "POST"
                 });
                 const json_ = await request.json();
@@ -32,7 +32,7 @@
                 }
                 for (result of json_.results) {
                     const el = document.createElement("li");
-                    el.innerText = result;
+                    el.innerHTML = `<a href="/playback?watch=${result.artistId}.${result.id}">${result.name}</a>`;
                     searchresults.appendChild(el);
                 }
             }

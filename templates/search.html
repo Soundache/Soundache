@@ -1,12 +1,34 @@
 {% extends "base.html" %}
 {% block title %}Search{% endblock %}
 {% block content %}
-    <ul id="searchresults-no-popup" type="none">
-    </ul>
-    <script>
-        let query = window.location.search.match(/\?searchbar\=(.*)/)[1];
-        console.log(query);
-        searchChar(query, "searchresults-no-popup");
-        document.getElementById("searchbar").value = query.replace('%20', ' ').replace('+', ' ');
-    </script>
+    {% if no_search_query %}
+        Perhaps type something in the searchbar first?
+    {% else %}
+        Results for "{{ query }}"
+        <div class="song-grid">
+        {% for artist, song in songs %}
+            <a class="songThumbnailGrid" href="/playback?watch={{song.artistId}}.{{song.id}}">
+                <img src="{{song.link}}/thumbnail" class="thumbnail" alt=""/>
+                <span class="songTitle">
+                    {{ song.name }}
+                </span>
+                <span class="artistName">
+                    {{ artist.split('@')[0] }}
+                </span>
+                <span class="views">
+                    {{ song.views }} &#x1F441;
+                </span>
+                <span class="likes">
+                    {{ song.likes }} &#128151;
+                </span>
+                <span class="dislikes">
+                    {{ song.dislikes }} &#128078;
+                </span>
+            </a>
+        {% endfor %}
+        </div>
+        <script>
+            document.getElementById("searchbar").value = new URLSearchParams(window.location.search).get('searchbar');
+        </script>
+    {% endif %}
 {% endblock %}

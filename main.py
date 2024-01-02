@@ -3,9 +3,10 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import Integer, String, ForeignKey, PickleType
 from sqlalchemy.ext.mutable import MutableList, MutableSet
+from sqlalchemy.sql import intersect, intersect_all
 from declarations import db, HASH_STR_64
-import difflib
 import toml
+import string
 
 SOUNDACHE = "Soundache"
 SECRETS = toml.load('instance/secrets.toml')
@@ -52,26 +53,49 @@ def main_page():
 
 @app.route("/search", methods=["GET", "POST"])
 def search():
-    if request.method == "GET":
-        return render_template("search.html")
-    elif request.method == "POST":
-        query = request.args.get("searchbar")
-        if query is None or query == "":
+    query = original_query = request.args.get("searchbar")
+    if query is None or query == "":
+        if request.method == 'GET':
+            return render_template("search.html", no_search_query=True)
+        elif request.method == 'POST':
             return jsonify(error="No search query provided"), 400
-        elements = ['Actinium', 'Aluminum', 'Americium', 'Antimony', 'Argon', 'Arsenic', 'Astatine', 
-                    'Barium', 'Berkelium', 'Beryllium', 'Bismuth', 'Bohrium', 'Boron', 'Bromine', 
-                    'Cadmium', 'Calcium', 'Californium', 'Carbon', 'Cerium', 'Cesium', 'Chlorine', 'Chromium', 'Cobalt', 'Copper', 'Curium', 
-                    'Darmstadtium', 'Dubnium', 'Dysprosium', 'Einsteinium', 'Erbium', 'Europium', 'Fermium', 'Fluorine', 'Francium', 
-                    'Gadolinium', 'Gallium', 'Germanium', 'Gold', 'Hafnium', 'Hassium', 'Helium', 'Holmium', 'Hydrogen',
-                    'Indium','Iodine','Iridium','Iron',
-                    'Krypton','Lanthanum','Lawrencium','Lead','Lithium','Livermorium','Lutetium',
-                    'Magnesium','Manganese','Meitnerium','Mendelevium','Mercury','Molybdenum','Moscovium',
-                    'Neodymium','Neon','Neptunium','Nickel','Nihonium','Niobium','Nitrogen','Nobelium','Oganesson','Osmium','Oxygen',
-                    'Palladium','Phosphorus','Platinum','Plutonium','Polonium','Potassium','Praseodymium','Promethium','Protactinium',
-                    'Radium','Radon','Rhenium', 'Rhodium'
-                    ]
-        lst = difflib.get_close_matches(query.capitalize(), elements, 16, min(0.8, 0.1*len(query)))
-        return jsonify(results=lst), 200
+        return jsonify(error="This endpoint only supports GET and POST"), 405
+    
+    for character in string.digits + string.punctuation:
+        query = query.replace(character, '')
+    query = query.lower().split(' ')
+
+    if query:
+        results = set()
+        for word in query:
+            res = db.session.get(Keywords, word)
+            if res is None:
+                continue
+            if not len(results):
+                results = res.songs
+                continue
+            results.intersection_update(res.songs)
+    else:
+        results = {}
+
+    if request.method == "GET":
+        songs = []
+        for result in results:
+            artistName = db.session.get(User, result[0]).email
+            music = db.session.get(Music, {'artistId': result[0], 'id': result[1]})
+            songs.append((artistName, music))
+        return render_template("search.html", songs=songs, query=original_query)
+    elif request.method == "POST":
+        results_lst = []
+        for result in results:
+            data = db.session.get(Music, {'artistId': result[0], 'id': result[1]})
+            results_lst.append({
+                'name': data.name,
+                'artistId': str(data.artistId),
+                'id': str(data.id),
+                'link': data.link
+            })
+        return jsonify(results=results_lst), 200
     return jsonify(error="This endpoint only supports GET and POST"), 405
 
 @app.route("/login", methods=["GET", "POST"])
@@ -255,6 +279,17 @@ def upload_songs():
         if song_exists:
             return jsonify(error="Song of same name and from same user already exists!"), 409
         db.session.add(Music(id=id, name=songName, artistId=artistId, link=url, derivativeOf=derivativeOf))
+
+        for character in string.digits + string.punctuation:
+            songName = songName.replace(character, '')
+        keywords = songName.lower().split(' ')
+        for keyword in keywords:
+            table = db.session.get(Keywords, keyword)
+            if not table:
+                table = Keywords(keyword=keyword, songs={(artistId, id), })
+                db.session.add(table)
+            table.songs.add((artistId, id))
+
         db.session.commit()
         return jsonify(), 200
     return jsonify(error="This endpoint only supports GET and POST"), 405
@@ -263,4 +298,4 @@ with app.app_context():
     db.create_all()
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(port=5000)
