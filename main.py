@@ -175,15 +175,18 @@ def playback():
         db.session.commit()
         return jsonify(likes=song.likes, dislikes=song.dislikes), 200
     
-    song = db.session.execute(db.select(User.email, Music)\
-                              .where(Music.id == song_id and Music.artistId == User.id)).fetchone()
+    song = db.session.execute(db.select(Music)\
+                              .where(Music.id == song_id and Music.artistId == artist_id)
+                            ).fetchone()[0]
+    artist = db.session.execute(db.select(User.email).where(User.id == artist_id)).scalar_one_or_none()
+    
     if not song:
         return jsonify(error="No such song!"), 404
     if session.get('email'):
         song[1].views += 1
         db.session.commit()
-    song_is_None = song is None
-    return render_template("playback.html", song=song, error=song_is_None, session=session), \
+    song_is_None = song is None or artist is None
+    return render_template("playback.html", song=(artist, song), error=song_is_None, session=session), \
          404 if song_is_None else 200
 
 @app.route("/likes", methods=['GET', 'POST'])

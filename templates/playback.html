@@ -8,9 +8,11 @@
             <img src="{{song[1].link}}/thumbnail" class="thumbnail" alt=""/>
             <span id="title">{{song[1].name}}</span>
             <span id="artistName">{{song[0].split('@')[0]}}</span>
+            {% if song[1].derivativeOf %}
             <span id="derivative-of">
                 Original at <a href="{{song[1].derivativeOf}}">{{song[1].derivativeOf}}</a>
             </span>
+            {% endif %}
             <span id="views">{{song[1].views}} views</span>
             {% if session.get('email') %}
                 <button id="like"    onclick="like()"   >{{song[1].likes}}    &#128151;</button>
