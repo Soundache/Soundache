@@ -3,7 +3,6 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import Integer, String, ForeignKey, PickleType
 from sqlalchemy.ext.mutable import MutableList, MutableSet
-from sqlalchemy.sql import intersect, intersect_all
 from declarations import db, HASH_STR_64
 import toml
 import string
@@ -60,7 +59,7 @@ def search():
         elif request.method == 'POST':
             return jsonify(error="No search query provided"), 400
         return jsonify(error="This endpoint only supports GET and POST"), 405
-    
+
     for character in string.digits + string.punctuation:
         query = query.replace(character, '')
     query = query.lower().split(' ')
@@ -118,7 +117,7 @@ def login():
                 session.clear()
                 return jsonify(error="Either email or password is wrong"), 403
     return jsonify(error="This endpoint only supports GET and POST"), 405
-    
+
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "GET":
@@ -136,7 +135,7 @@ def register():
         db.session.commit()
         session['email'] = request.form["email"]
         return jsonify(), 200
-    return jsonify(error="This endpoint only supports GET and POST"), 405 
+    return jsonify(error="This endpoint only supports GET and POST"), 405
 
 @app.route("/playback")
 def playback():
@@ -144,7 +143,7 @@ def playback():
         artist_id, song_id = request.args.get('watch').split('.')
     except:
         return jsonify(error="Malformed or non-existent (required) query 'watch'"), 400
-    
+
     action = request.args.get('action')
     if action and session.get('email'):
         userID = HASH_STR_64(session.get('email'))
@@ -174,16 +173,16 @@ def playback():
             return jsonify(error="'action' query can only have 'like' or 'dislike' as values"), 400
         db.session.commit()
         return jsonify(likes=song.likes, dislikes=song.dislikes), 200
-    
+
     song = db.session.execute(db.select(Music)\
                               .where(Music.id == song_id and Music.artistId == artist_id)
                             ).fetchone()[0]
     artist = db.session.execute(db.select(User.email).where(User.id == artist_id)).scalar_one_or_none()
-    
+
     if not song:
         return jsonify(error="No such song!"), 404
     if session.get('email'):
-        song[1].views += 1
+        song.views += 1
         db.session.commit()
     song_is_None = song is None or artist is None
     return render_template("playback.html", song=(artist, song), error=song_is_None, session=session), \
@@ -212,7 +211,7 @@ def likes():
 
     if request.method == 'GET':
         return render_template("likes.html", liked_songs=liked_songs, disliked_songs=disliked_songs)
-    
+
     liked_songs_out = []
     disliked_songs_out = []
     for i in liked_songs:
@@ -229,7 +228,7 @@ def user():
             return render_template("user.html", has_songs=True, artistName='')
         else:
             return jsonify(error="Must either be signed in or provide a query string!"), 403
-        
+
     for char in userID:
         if char.isalpha():
             userID = HASH_STR_64(userID)
@@ -250,7 +249,7 @@ def user():
         ).all()
 
     if request.method == 'GET':
-        return render_template("user.html", songs=songs, has_no_songs=len(songs)==0, artistName=username.split('@')[0], 
+        return render_template("user.html", songs=songs, has_no_songs=len(songs)==0, artistName=username.split('@')[0],
                                no_such_user=False)
     songs_out = []
     for i in songs:
