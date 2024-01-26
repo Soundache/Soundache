@@ -17,7 +17,7 @@ Soundache's API endpoints are the same as its subpages, except you use POST to g
 ![Alt text](api_examples/Subpage%20user.png)
 
 To login, use this and copy the session header to put in your successive requests
-![Alt text](api_examples/Subpage%20login.png)
+![Alt text](api_examples/Subpage%20login_new.png)
 
 ![Alt text](api_examples/Subpage%20likes.png)
 
